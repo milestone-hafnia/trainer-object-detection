@@ -2,31 +2,14 @@ from pathlib import Path
 
 from hafnia.dataset.dataset_names import SplitName
 from hafnia.dataset.hafnia_dataset import HafniaDataset
-from hafnia.dataset.hafnia_dataset_types import Sample, TaskInfo
+from hafnia.dataset.hafnia_dataset_types import Sample
 from hafnia.dataset.primitives import Bbox
 from hafnia.utils import progress_bar
 from hafnia.visualizations import image_visualizations
 from PIL import Image
 from rfdetr import detr
 
-
-def to_bbox_primitives(predictions, sample: Sample, task_info: TaskInfo) -> list[Bbox]:
-    class_names = task_info.class_names
-    predictions_bboxes = []
-    for bbox, class_idx, confidence in zip(predictions.xyxy, predictions.class_id, predictions.confidence, strict=True):
-        bbox = Bbox(
-            height=(bbox[3] - bbox[1]) / sample.height,
-            width=(bbox[2] - bbox[0]) / sample.width,
-            top_left_x=bbox[0] / sample.width,
-            top_left_y=bbox[1] / sample.height,
-            class_idx=int(class_idx),
-            class_name=class_names[int(class_idx)],
-            confidence=float(confidence),
-            ground_truth=False,
-        )
-        predictions_bboxes.append(bbox)
-    return predictions_bboxes
-
+from trainer_object_detection.train_utils import to_bbox_primitives
 
 if __name__ == "__main__":
     dataset = HafniaDataset.from_name("midwest-vehicle-detection")
@@ -46,7 +29,7 @@ if __name__ == "__main__":
         predictions = model.predict(image, threshold=0.35)
 
         task_info = dataset.info.get_task_by_primitive(Bbox)
-        bboxes = to_bbox_primitives(predictions, sample, task_info)
+        bboxes = to_bbox_primitives(predictions=predictions, sample=sample, class_names=task_info.class_names)
 
         annotations_visualized = image_visualizations.draw_annotations(image=image, primitives=bboxes)
         path_visualization = path_prediction_visualization / f"prediction_visualization_{i_sample}.png"

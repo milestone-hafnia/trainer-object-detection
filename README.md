@@ -93,7 +93,7 @@ hafnia configure
 hafnia experiment create --dataset midwest-vehicle-detection --trainer-path .
 
 # Example 2: Package and launch experiment with custom training command
-hafnia experiment create --dataset midwest-vehicle-detection --trainer-path . --cmd "python scripts/train.py --epochs 1 --learning_rate 0.001"
+hafnia experiment create --dataset midwest-vehicle-detection-tiny --trainer-path . --cmd "python scripts/train.py --epochs 1 --learning_rate 0.001"
 
 ```
 In above example the `--trainer-path` argument points to the local trainer package folder, the `midwest-vehicle-detection` dataset will be used in training. In the second example, we will use  override the default training command and add custom training parameters specific to the trainer package.

@@ -9,11 +9,8 @@ from hafnia.dataset.dataset_names import SampleField
 from hafnia.dataset.hafnia_dataset import HafniaDataset
 from hafnia.experiment import HafniaLogger
 from hafnia.log import user_logger
-from rfdetr import detr
 
-from trainer_object_detection.train_utils import patch_to_support_experiment_tracker_with_hafnia
-
-detr = patch_to_support_experiment_tracker_with_hafnia(detr)
+from trainer_object_detection import train_utils
 
 
 def parse_args():
@@ -53,20 +50,9 @@ def main(args: argparse.Namespace):
     configuration["trainer"] = "DETR Object Detection"
     logger.log_configuration(configuration)  # Log the configuration to the UI
 
-    if args.model == "RFDETRBase":
-        model = detr.RFDETRBase()
-    elif args.model == "RFDETRNano":
-        model = detr.RFDETRNano()
-    elif args.model == "RFDETRSmall":
-        model = detr.RFDETRSmall()
-    elif args.model == "RFDETRMedium":
-        model = detr.RFDETRMedium()
-    elif args.model == "RFDETRLarge":
-        model = detr.RFDETRLarge()
-    else:
-        raise ValueError(f"Model {args.model} not recognized.")
-
     dataset = remove_images_with_no_bboxes(dataset)
+
+    model = train_utils.get_model_from_name(args.model, pretrain_weights=None)  # Get model from name
 
     # Convert dataset to COCO format for training
     dataset_name = dataset.info.dataset_name
