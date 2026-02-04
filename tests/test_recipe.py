@@ -5,6 +5,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+import torch
 from hafnia import utils
 from hafnia.experiment.command_builder import (
     CommandBuilderSchema,
@@ -66,6 +67,8 @@ def test_trainer_zip_outdated(tmp_path: Path):
 def test_integration_test_placeholder():
     from scripts.train import main
 
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA is not available. Skipping integration test.")
     main(project_name="test_project", epochs=1)
 
 
