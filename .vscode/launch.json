@@ -9,7 +9,8 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false
         },
         {
             "name": "Model training",
@@ -17,10 +18,10 @@
             "request": "launch",
             "program": "${workspaceFolder}/scripts/train.py",
             "args": [
-                "--dataset_local", "coco-2017", // coco-2017, midwest-vehicle-detection
                 // "--model", "RFDETRSegPreview", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
                 //"--batch_size", "2",
-                "--epochs", "1"
+                "--epochs", "1",
+                //"--stop_early", // Breaks script before training starts. Can be used to avoid long training times during testing.
             ],
         }
     ]

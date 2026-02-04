@@ -17,9 +17,9 @@ __pycache__
 dist/
 tests/
 mlruns/
-local_stuff/
+
 
 # Hafnia files
+local_stuff/
 trainer.zip
-README.md
 state.json

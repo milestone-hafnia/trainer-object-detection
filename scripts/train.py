@@ -1,14 +1,16 @@
-import argparse
 import shutil
 from pathlib import Path
+from typing import Annotated, Literal
 
 import polars as pl
 import torch
+from cyclopts import App, Parameter
 from hafnia import utils
 from hafnia.dataset.dataset_names import SampleField
 from hafnia.dataset.hafnia_dataset import HafniaDataset
 from hafnia.dataset.primitives import Bitmask
 from hafnia.experiment import HafniaLogger
+from hafnia.experiment.command_builder import auto_save_command_builder_schema
 from hafnia.log import user_logger
 from rfdetr import detr
 
@@ -16,22 +18,27 @@ from trainer_object_detection.train_utils import patch_to_support_experiment_tra
 
 detr = patch_to_support_experiment_tracker_with_hafnia(detr)
 
+CLI_TOOL = "cyclopts"
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="PyTorch Training")
-    parser.add_argument(
-        "--dataset_local", type=str, default="midwest-vehicle-detection", help="Dataset being used locally"
-    )
-    parser.add_argument("--project_name", type=str, default="Trainer RF-DETR", help="Project name for the experiment")
-    parser.add_argument("--model", type=str, default="RFDETRNano", help="Model architecture to use")
-    parser.add_argument("--epochs", type=int, default=10, help="Number of epochs to train")
-    parser.add_argument("--batch_size", type=int, default=8, help="Batch size for training")
-    parser.add_argument("--grad_accumulation_steps", type=int, default=1, help="Gradient accumulation steps")
-    parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate for optimizer")
-    return parser.parse_args()
+TYPE_MODEL = Literal["RFDETRNano", "RFDETRSmall", "RFDETRMedium", "RFDETRBase", "RFDETRLarge", "RFDETRSegPreview"]
 
 
-def main(args: argparse.Namespace):
+app = App(name="train", help="PyTorch Training")
+
+
+@app.default
+def main(
+    project_name: Annotated[str, Parameter(help="Project name for the experiment")] = "Trainer RF-DETR",
+    model: Annotated[TYPE_MODEL, Parameter(help="Model architecture to use")] = "RFDETRNano",
+    epochs: Annotated[int, Parameter(help="Number of epochs to train")] = 10,
+    batch_size: Annotated[int, Parameter(help="Batch size for training")] = 8,
+    grad_accumulation_steps: Annotated[int, Parameter(help="Gradient accumulation steps")] = 1,
+    learning_rate: Annotated[float, Parameter(help="Learning rate for optimizer")] = 0.001,
+    stop_early: Annotated[
+        bool,
+        Parameter(help="Break script before training starts. Can be used to avoid long training times during testing."),
+    ] = False,
+):
     # Check cuda availability
     has_cuda = torch.cuda.is_available()
     if has_cuda:
@@ -39,36 +46,41 @@ def main(args: argparse.Namespace):
     else:
         print("CUDA is not available. Training on CPU.")
 
-    logger = HafniaLogger(project_name=args.project_name)
+    logger = HafniaLogger(project_name=project_name)
 
     if utils.is_hafnia_cloud_job():  # For hafnia cloud execution
         path_dataset = utils.get_dataset_path_in_hafnia_cloud()  # The path to the full/hidden dataset is returned
         dataset = HafniaDataset.from_path(path_dataset)
-    elif args.dataset_local:  # For local execution
-        dataset = HafniaDataset.from_name(args.dataset_local)  # The small/public sample dataset is returned by name
     else:
-        raise ValueError("You must provide a dataset name with the '--dataset_local DATASET_NAME' argument")
+        # # The small/public sample dataset is returned by name
+        dataset = HafniaDataset.from_name("midwest-vehicle-detection", version="1.0.0")
 
-    configuration = vars(args)
-    configuration["dataset"] = dataset.info.dataset_name
-    configuration["has_cuda"] = has_cuda
+    configuration = {
+        "model": model,
+        "epochs": epochs,
+        "batch_size": batch_size,
+        "grad_accumulation_steps": grad_accumulation_steps,
+        "learning_rate": learning_rate,
+        "dataset": dataset.info.dataset_name,
+        "has_cuda": has_cuda,
+    }
     logger.log_configuration(configuration)
 
-    if args.model == "RFDETRNano":
+    if model == "RFDETRNano":
         model = detr.RFDETRNano()
-    elif args.model == "RFDETRSmall":
+    elif model == "RFDETRSmall":
         model = detr.RFDETRSmall()
-    elif args.model == "RFDETRMedium":
+    elif model == "RFDETRMedium":
         model = detr.RFDETRMedium()
-    elif args.model == "RFDETRBase":
+    elif model == "RFDETRBase":
         model = detr.RFDETRBase()
-    elif args.model == "RFDETRLarge":
+    elif model == "RFDETRLarge":
         model = detr.RFDETRLarge()
-    elif args.model == "RFDETRSegPreview":
+    elif model == "RFDETRSegPreview":
         torch.backends.cudnn.enabled = False  # Disable cuDNN to avoid runtime errors with RFDETRSegPreview
         model = detr.RFDETRSegPreview()
     else:
-        raise ValueError(f"Model {args.model} not recognized.")
+        raise ValueError(f"Model {model} not recognized.")
 
     if isinstance(model, detr.RFDETRSegPreview) and not dataset.has_primitive(Bitmask):
         raise ValueError(
@@ -84,12 +96,17 @@ def main(args: argparse.Namespace):
     dataset.to_coco_format(dataset_path)
     path_experiment = logger._local_experiment_path
     path_experiment.mkdir(parents=True, exist_ok=True)
+
+    if stop_early:
+        user_logger.info("Early stopping before training was activated with '--stop_early' flag.")
+        return None
+
     model.train(
         dataset_dir=dataset_path.as_posix(),
-        epochs=args.epochs,
-        batch_size=args.batch_size,
-        learning_rate=args.learning_rate,
-        grad_accumulation_steps=args.grad_accumulation_steps,
+        epochs=epochs,
+        batch_size=batch_size,
+        learning_rate=learning_rate,
+        grad_accumulation_steps=grad_accumulation_steps,
         output_dir=path_experiment.as_posix(),
     )
 
@@ -132,5 +149,8 @@ def remove_images_with_no_bboxes(dataset: HafniaDataset) -> HafniaDataset:
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    main(args)
+    # Creates launch schema file for the CLI function 'main'
+    path_launch_schema = auto_save_command_builder_schema(main, cli_tool=CLI_TOOL)
+    user_logger.info(f"Launch schema saved to: {path_launch_schema}")
+
+    app()

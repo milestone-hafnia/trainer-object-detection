@@ -1,0 +1,65 @@
+{
+    "cmd": "python scripts/train.py",
+    "json_schema": {
+        "properties": {
+            "project_name": {
+                "default": "Trainer RF-DETR",
+                "description": "Project name for the experiment",
+                "title": "Project Name",
+                "type": "string"
+            },
+            "model": {
+                "default": "RFDETRNano",
+                "description": "Model architecture to use",
+                "enum": [
+                    "RFDETRNano",
+                    "RFDETRSmall",
+                    "RFDETRMedium",
+                    "RFDETRBase",
+                    "RFDETRLarge",
+                    "RFDETRSegPreview"
+                ],
+                "title": "Model",
+                "type": "string"
+            },
+            "epochs": {
+                "default": 10,
+                "description": "Number of epochs to train",
+                "title": "Epochs",
+                "type": "integer"
+            },
+            "batch_size": {
+                "default": 8,
+                "description": "Batch size for training",
+                "title": "Batch Size",
+                "type": "integer"
+            },
+            "grad_accumulation_steps": {
+                "default": 1,
+                "description": "Gradient accumulation steps",
+                "title": "Grad Accumulation Steps",
+                "type": "integer"
+            },
+            "learning_rate": {
+                "default": 0.001,
+                "description": "Learning rate for optimizer",
+                "title": "Learning Rate",
+                "type": "number"
+            },
+            "stop_early": {
+                "default": false,
+                "description": "Break script before training starts. Can be used to avoid long training times during testing.",
+                "title": "Stop Early",
+                "type": "boolean"
+            }
+        },
+        "title": "mainArgs",
+        "type": "object"
+    },
+    "n_positional_args": 0,
+    "case_conversion": "kebab",
+    "parameter_prefix": "--",
+    "nested_parameter_handling": "dot",
+    "assignment_separator": "space",
+    "bool_handling": "flag-negation"
+}
