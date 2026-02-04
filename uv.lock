@@ -3819,6 +3819,7 @@ source = { editable = "." }
 dependencies = [
     { name = "cyclopts" },
     { name = "hafnia" },
+    { name = "opencv-python-headless" },
     { name = "pytest" },
     { name = "rfdetr" },
 ]
@@ -3827,6 +3828,7 @@ dependencies = [
 requires-dist = [
     { name = "cyclopts", specifier = "==4.5.1" },
     { name = "hafnia", specifier = "==0.5.4" },
+    { name = "opencv-python-headless", specifier = ">4.13" },
     { name = "pytest", specifier = ">=9.0.1" },
     { name = "rfdetr", specifier = "==1.4.1" },
 ]
