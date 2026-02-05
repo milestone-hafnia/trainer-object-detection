@@ -8,7 +8,8 @@ dependencies = [
     "hafnia==0.5.4",
     "cyclopts==4.5.1",
     "rfdetr==1.4.1",
-    "opencv-python-headless<4.13", # Issues in 4.13.0.90" for small images
+    "opencv-python<4.13", # Issues in 4.13.0.90" for small images (rfdetr requires opencv-python)
+    "opencv-python-headless<4.13", # Issues in 4.13.0.90" for small images (hafnia requires opencv-python-headless)
     "pytest>=9.0.1",
 ]
 # Adding hafnia:
