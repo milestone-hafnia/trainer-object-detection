@@ -1,8 +1,14 @@
 # Using slim Debian base image - CUDA/cuDNN will come from PyTorch wheels
 FROM debian:bookworm-slim
 
-# Install uv python package manager
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git
+# Install uv python package manager and OpenCV dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    git \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
