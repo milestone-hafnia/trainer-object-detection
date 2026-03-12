@@ -92,7 +92,10 @@ hafnia configure
 # Example 1: Package and launch experiment with default training command "python scripts/train.py"
 hafnia experiment create --dataset midwest-vehicle-detection --trainer-path .
 
-# Example 2: Package and launch experiment with custom training command
+# Example 2: Quick training
+hafnia experiment create --dataset midwest-vehicle-detection --trainer-path . --cmd "python scripts/train.py --epochs 1"
+
+# Example 3: Package and launch experiment with custom training command
 hafnia experiment create --dataset coco-2017 --trainer-path . --cmd "python scripts/train.py --model RFDETRSegPreview --batch_size 2  --epochs 3"
 
 ```
