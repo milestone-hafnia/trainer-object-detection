@@ -8,19 +8,17 @@
                 "title": "Project Name",
                 "type": "string"
             },
-            "model": {
-                "default": "RFDETRNano",
-                "description": "Model architecture to use",
-                "enum": [
-                    "RFDETRNano",
-                    "RFDETRSmall",
-                    "RFDETRMedium",
-                    "RFDETRBase",
-                    "RFDETRLarge",
-                    "RFDETRSegPreview"
-                ],
-                "title": "Model",
+            "model_path": {
+                "default": "./pretrained_models/RFDETRNano",
+                "description": "Model name or checkpoint path. Options: ['pretrained_models/RFDETRNano', 'pretrained_models/RFDETRSmall', 'pretrained_models/RFDETRMedium', 'pretrained_models/RFDETRSegPreview']",
+                "title": "Model Path",
                 "type": "string"
+            },
+            "pretrained": {
+                "default": true,
+                "description": "Use pretrained weights",
+                "title": "Pretrained",
+                "type": "boolean"
             },
             "epochs": {
                 "default": 10,
@@ -45,6 +43,21 @@
                 "description": "Learning rate for optimizer",
                 "title": "Learning Rate",
                 "type": "number"
+            },
+            "samples": {
+                "anyOf": [
+                    {
+                        "type": "integer",
+                        "title": "Select 'Integer'"
+                    },
+                    {
+                        "type": "null",
+                        "title": "Select None"
+                    }
+                ],
+                "default": -1,
+                "description": "Number of samples to use for training. Use for testing purposes.",
+                "title": "Samples"
             },
             "stop_early": {
                 "default": false,

@@ -1,0 +1,95 @@
+{
+    "cmd": "python scripts/inference.py",
+    "json_schema": {
+        "$defs": {
+            "InferenceConfig": {
+                "properties": {
+                    "compile": {
+                        "default": false,
+                        "title": "Compile",
+                        "type": "boolean"
+                    },
+                    "batch_size": {
+                        "default": 1,
+                        "title": "Batch Size",
+                        "type": "integer"
+                    },
+                    "threshold": {
+                        "default": 0.05,
+                        "title": "Threshold",
+                        "type": "number"
+                    }
+                },
+                "title": "InferenceConfig",
+                "type": "object"
+            }
+        },
+        "properties": {
+            "model_path": {
+                "default": "./pretrained_models/RFDETRNano",
+                "description": "Path to trained model",
+                "title": "Model Path",
+                "type": "string"
+            },
+            "inference": {
+                "$ref": "#/$defs/InferenceConfig",
+                "default": {
+                    "compile": false,
+                    "batch_size": 1,
+                    "threshold": 0.05
+                },
+                "description": "Inference configuration for the model"
+            },
+            "model_class_mapping": {
+                "anyOf": [
+                    {
+                        "type": "string",
+                        "title": "Select 'String'"
+                    },
+                    {
+                        "type": "null",
+                        "title": "Select None"
+                    }
+                ],
+                "default": null,
+                "description": "Class mapping to use for the model. Options: [None, 'COCO2OnlyVehicle', 'Midwest2OnlyVehicle']",
+                "title": "Model Class Mapping"
+            },
+            "split_name": {
+                "default": "test",
+                "description": "Dataset split to run inference on",
+                "title": "Split Name",
+                "type": "string"
+            },
+            "output_path": {
+                "default": "./.data/inference_output",
+                "description": "Path where the dataset with predictions will be written",
+                "title": "Output Path",
+                "type": "string"
+            },
+            "samples": {
+                "anyOf": [
+                    {
+                        "type": "integer",
+                        "title": "Select 'Integer'"
+                    },
+                    {
+                        "type": "null",
+                        "title": "Select None"
+                    }
+                ],
+                "default": null,
+                "description": "Limit the number of samples to run on. Useful for faster testing.",
+                "title": "Samples"
+            }
+        },
+        "title": "mainArgs",
+        "type": "object"
+    },
+    "n_positional_args": 0,
+    "case_conversion": "kebab",
+    "parameter_prefix": "--",
+    "nested_parameter_handling": "dot",
+    "assignment_separator": "space",
+    "bool_handling": "flag-negation"
+}

@@ -15,6 +15,8 @@ from hafnia.experiment.command_builder import (
 )
 from hafnia.platform.builder import validate_trainer_package_format
 
+from trainer_object_detection.utils import CLI_TOOL
+
 
 def file_hash(zip_file, name):
     """Get hash of the uncompressed file content inside a zip archive."""
@@ -64,17 +66,44 @@ def test_trainer_zip_outdated(tmp_path: Path):
     assert compare_zip_files(path_trainer_zip_actual, path_trainer_zip_expected), assert_msg
 
 
-def test_integration_test_placeholder():
+def test_train_script():
     from scripts.train import main
 
     if not torch.cuda.is_available():
         pytest.skip("CUDA is not available. Skipping integration test.")
-    main(project_name="test_project", epochs=1)
+    main(project_name="test_project", epochs=1, samples=20)
 
 
-def test_command_builder_schema():
-    """Test that the launch schema can be saved to a file."""
-    from scripts.train import CLI_TOOL, main
+def test_benchmark_script():
+    from scripts.benchmark import main
+
+    main(samples=2, model_class_mapping="COCO2OnlyVehicle", dataset_class_mapping="Midwest2OnlyVehicle")
+
+
+def test_inference_script():
+    from scripts.inference import main
+
+    main(samples=2)
+
+
+def test_predict_script():
+    from visualize import main
+
+    main(samples=2)
+
+
+def _script_main(script_name: str):
+    """Import the ``main`` function from a script module by name."""
+    import importlib
+
+    module = importlib.import_module(f"scripts.{script_name}")
+    return module.main
+
+
+@pytest.mark.parametrize("script_name", ["train", "benchmark", "inference"])
+def test_command_builder_schema(script_name: str):
+    """Test that the launch schema is up-to-date for each script."""
+    main = _script_main(script_name)
 
     path_function = path_of_function(main)
     path_function_schema = path_function.with_suffix(".schema.json")
@@ -92,6 +121,12 @@ def test_command_builder_schema():
         f"({path_function_schema}) and rerun this test to regenerate it."
     )
 
+
+def test_train_command_runs():
+    """Test that the train script can be invoked end-to-end via the generated CLI args."""
+    from scripts.train import main
+
+    actual_schema = CommandBuilderSchema.from_function(main, cli_tool=CLI_TOOL)
     form_data = simulate_form_data(main, user_args={"stop_early": "True"})
     cmd_args = actual_schema.command_args_from_form_data(form_data)
     subprocess.run(cmd_args, shell=True, check=True)
