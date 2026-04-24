@@ -1,39 +1,43 @@
 import shutil
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Optional, Type
 
 import polars as pl
 import torch
 from cyclopts import App, Parameter
-from hafnia import utils
-from hafnia.dataset.dataset_names import SampleField
+from hafnia import utils as hafnia_utils
 from hafnia.dataset.hafnia_dataset import HafniaDataset
-from hafnia.dataset.primitives import Bitmask
+from hafnia.dataset.primitives import Primitive
 from hafnia.experiment import HafniaLogger
 from hafnia.experiment.command_builder import auto_save_command_builder_schema
 from hafnia.log import user_logger
 from rfdetr import detr
 
-from trainer_object_detection.train_utils import patch_to_support_experiment_tracker_with_hafnia
+import trainer_object_detection.wrapped_model
+from trainer_object_detection import utils
+from trainer_object_detection.wrapped_model import MODEL_CONFIG_NAME, InitModelConfig
 
-detr = patch_to_support_experiment_tracker_with_hafnia(detr)
-
-CLI_TOOL = "cyclopts"
-
-TYPE_MODEL = Literal["RFDETRNano", "RFDETRSmall", "RFDETRMedium", "RFDETRBase", "RFDETRLarge", "RFDETRSegPreview"]
-
+detr = utils.patch_to_support_experiment_tracker_with_hafnia(detr)
 
 app = App(name="train", help="PyTorch Training")
+
+MODEL_NAME_OPTIONS = [f"pretrained_models/{d.name}" for d in trainer_object_detection.wrapped_model.MODEL_OPTIONS]
 
 
 @app.default
 def main(
     project_name: Annotated[str, Parameter(help="Project name for the experiment")] = "Trainer RF-DETR",
-    model: Annotated[TYPE_MODEL, Parameter(help="Model architecture to use")] = "RFDETRNano",
+    model_path: Annotated[
+        str, Parameter(help=f"Model name or checkpoint path. Options: {MODEL_NAME_OPTIONS}")
+    ] = "./pretrained_models/RFDETRNano",
+    pretrained: Annotated[bool, Parameter(help="Use pretrained weights")] = True,
     epochs: Annotated[int, Parameter(help="Number of epochs to train")] = 10,
     batch_size: Annotated[int, Parameter(help="Batch size for training")] = 8,
     grad_accumulation_steps: Annotated[int, Parameter(help="Gradient accumulation steps")] = 1,
     learning_rate: Annotated[float, Parameter(help="Learning rate for optimizer")] = 0.001,
+    samples: Annotated[
+        Optional[int], Parameter(help="Number of samples to use for training. Use for testing purposes.")
+    ] = -1,
     stop_early: Annotated[
         bool,
         Parameter(help="Break script before training starts. Can be used to avoid long training times during testing."),
@@ -48,15 +52,23 @@ def main(
 
     logger = HafniaLogger(project_name=project_name)
 
-    if utils.is_hafnia_cloud_job():  # For hafnia cloud execution
-        path_dataset = utils.get_dataset_path_in_hafnia_cloud()  # The path to the full/hidden dataset is returned
+    if hafnia_utils.is_hafnia_cloud_job():  # For hafnia cloud execution
+        path_dataset = hafnia_utils.get_dataset_path_in_hafnia_cloud()  # The path to hidden dataset is returned
         dataset = HafniaDataset.from_path(path_dataset)
     else:
-        # # The small/public sample dataset is returned by name
         dataset = HafniaDataset.from_name("midwest-vehicle-detection", version="1.0.0")
 
+    if samples is not None and samples > 0:
+        dataset = dataset.select_samples(n_samples=samples)
+
+    model_json = Path(model_path) / MODEL_CONFIG_NAME
+    model_config = InitModelConfig.load_model(model_json, use_weights=pretrained)
+    model_primitive = model_config.task.primitive
+
+    model_trainer = model_config.get_trainer()
     configuration = {
-        "model": model,
+        "model": model_path,
+        "pretrained": pretrained,
         "epochs": epochs,
         "batch_size": batch_size,
         "grad_accumulation_steps": grad_accumulation_steps,
@@ -66,34 +78,21 @@ def main(
     }
     logger.log_configuration(configuration)
 
-    if model == "RFDETRNano":
-        model = detr.RFDETRNano()
-    elif model == "RFDETRSmall":
-        model = detr.RFDETRSmall()
-    elif model == "RFDETRMedium":
-        model = detr.RFDETRMedium()
-    elif model == "RFDETRBase":
-        model = detr.RFDETRBase()
-    elif model == "RFDETRLarge":
-        model = detr.RFDETRLarge()
-    elif model == "RFDETRSegPreview":
-        torch.backends.cudnn.enabled = False  # Disable cuDNN to avoid runtime errors with RFDETRSegPreview
-        model = detr.RFDETRSegPreview()
-    else:
-        raise ValueError(f"Model {model} not recognized.")
-
-    if isinstance(model, detr.RFDETRSegPreview) and not dataset.has_primitive(Bitmask):
+    if not dataset.has_primitive(model_primitive):
+        available_primitives = [str(t.primitive.__name__) for t in dataset.info.tasks]
         raise ValueError(
-            "You have selected an instance segmentation model ('RFDETRSegPreview') which requires a dataset with "
-            f"'Bitmask' primitive. The selected dataset '{dataset.info.dataset_name}' does not "
-            "include 'Bitmask' primitives. Please select a different model or dataset."
+            f"The selected model '{model_path}' requires the dataset to have '{model_primitive}' annotations. "
+            f"However, the dataset only contains the following primitives: {available_primitives}"
         )
-    dataset = remove_images_with_no_bboxes(dataset)
+    dataset = remove_images_with_no_bboxes(dataset, model_primitive=model_primitive)
+
+    # Dataset should only have one task with the specified primitive or it will break!
+    task_info = dataset.info.get_task_by_primitive(model_primitive)
 
     # Convert dataset to COCO format for training
     dataset_name = dataset.info.dataset_name
     dataset_path = Path(".data") / f"format_coco_roboflow_{dataset_name}"
-    dataset.to_coco_format(dataset_path)
+    dataset.to_coco_format(dataset_path, task_name=task_info.name)
     path_experiment = logger._local_experiment_path
     path_experiment.mkdir(parents=True, exist_ok=True)
 
@@ -101,7 +100,7 @@ def main(
         user_logger.info("Early stopping before training was activated with '--stop_early' flag.")
         return None
 
-    model.train(
+    model_trainer.train(
         dataset_dir=dataset_path.as_posix(),
         epochs=epochs,
         batch_size=batch_size,
@@ -110,18 +109,20 @@ def main(
         output_dir=path_experiment.as_posix(),
     )
 
+    model_folder_path = logger.path_model()
     # Move final model weights to model folder (e.g. "checkpoint_best_regular.pth" and "checkpoint_best_total.pth")
     model_paths = list(path_experiment.glob("checkpoint_*.pth"))
-    model_folder_path = logger.path_model()  # Store model here to make it available in the UI.
     for model_path in model_paths:
-        shutil.copy2(model_path, model_folder_path)
+        model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(model_path))
+        model_config.save_model(model_folder_path / model_path.stem)
 
     # Move checkpoints to checkpoints folder (e.g. "checkpoint0000.pth", "checkpoint0010.pth")
     # (Both models and checkpoints start with "checkpoint", so we exclude 'model_paths' from checkpoint models)
     checkpoint_model_paths = set(path_experiment.glob("checkpoint*.pth")) - set(model_paths)
     checkpoints_folder_path = logger.path_model_checkpoints()
     for ckpt_path in checkpoint_model_paths:
-        shutil.copy2(ckpt_path, checkpoints_folder_path)
+        model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(ckpt_path))
+        model_config.save_model(checkpoints_folder_path / ckpt_path.stem)
 
     # Move files to artifact folder
     artifact_folder_path = logger._path_artifacts()
@@ -135,14 +136,11 @@ def main(
     return logger
 
 
-def remove_images_with_no_bboxes(dataset: HafniaDataset) -> HafniaDataset:
-    # Remove images with no bounding boxes to avoid runtime errors during training
-    if SampleField.BITMASKS in dataset.samples.columns:
-        filter_column_name = SampleField.BITMASKS
-    elif SampleField.BBOXES in dataset.samples.columns:
-        filter_column_name = SampleField.BBOXES
-    else:
+def remove_images_with_no_bboxes(dataset: HafniaDataset, model_primitive: Type[Primitive]) -> HafniaDataset:
+    if not dataset.has_primitive(model_primitive):
         raise ValueError("Dataset does not contain bounding box information.")
+
+    filter_column_name = model_primitive.column_name()
     samples_with_bboxes = dataset.samples.filter(pl.col(filter_column_name).list.len() > 0)
     dataset = dataset.update_samples(samples_with_bboxes)
     return dataset
@@ -150,7 +148,7 @@ def remove_images_with_no_bboxes(dataset: HafniaDataset) -> HafniaDataset:
 
 if __name__ == "__main__":
     # Creates launch schema file for the CLI function 'main'
-    path_launch_schema = auto_save_command_builder_schema(main, cli_tool=CLI_TOOL)
+    path_launch_schema = auto_save_command_builder_schema(main, cli_tool=utils.CLI_TOOL)
     user_logger.info(f"Launch schema saved to: {path_launch_schema}")
 
     app()

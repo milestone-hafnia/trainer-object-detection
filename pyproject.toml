@@ -6,12 +6,13 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "cyclopts==4.5.1",
-    "hafnia==0.7.0",
+    "hafnia",
     "pytest>=9.0.1",
     "rfdetr>=1.5.2",
 ]
-# Adding hafnia:
-# - As a package with "uv add hafnia==0.4.1"
+
+# Using hafnia:
+# - As a package with "uv add hafnia==0.4.1". 
 # - As a local editable install "uv add --editable ../hafnia"
 # - As a package from git - in this example the main branch: "uv add git+https://github.com/milestone-hafnia/hafnia.git@main"
 
@@ -25,5 +26,8 @@ packages = ["src/trainer_object_detection", "scripts"]
 
 [tool.ruff]
 extend-include = ["*.ipynb"]
-line-length = 120 # This should match the 'line-length' in 'pyproject.toml'
-lint.select = ["C4", "E", "F","B", "I", "W", "RUF", "Q"]
+line-length = 120                                         # This should match the 'line-length' in 'pyproject.toml'
+lint.select = ["C4", "E", "F", "B", "I", "W", "RUF", "Q"]
+
+[tool.uv.sources]
+hafnia = { git = "https://github.com/milestone-hafnia/hafnia.git", rev = "benchmark" }

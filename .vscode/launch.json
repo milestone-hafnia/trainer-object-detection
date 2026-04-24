@@ -23,6 +23,52 @@
                 "--epochs", "1",
                 //"--stop_early", // Breaks script before training starts. Can be used to avoid long training times during testing.
             ],
+        },
+        {
+            "name": "Visualize Predictions",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/visualize.py",
+            "args": [
+                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
+                //"--model-path", "./checkpoint_models/best_ema", // best_ema, best_regular, best_total
+                "--inference.threshold", "0.35",
+
+            ],
+        },
+        {
+            "name": "Model benchmark (pretrained)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/benchmark.py",
+            "args": [
+                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
+                //"--model-path", "./checkpoint_models/best_ema", // best_ema, best_regular, best_total
+                "--model-class-mapping", "COCO2OnlyVehicle",
+                "--samples", "10"
+            ],
+        },
+        {
+            "name": "Model benchmark (checkpoint)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/benchmark.py",
+            "args": [
+                "--model-path", "./checkpoint_models/best_ema", // best_ema, best_regular, best_total
+                "--dataset-class-mapping", "Midwest2OnlyVehicle",
+                "--samples", "10"
+            ],
+        },
+        {
+            "name": "Model Inference",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/inference.py",
+            "args": [
+                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
+                "--model-class-mapping", "COCO2OnlyVehicle",
+                "--samples", "10"
+            ],
         }
     ]
 }
