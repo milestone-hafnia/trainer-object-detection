@@ -23,6 +23,7 @@ mlruns/
 
 
 # Hafnia files
+mlflow.db
 local_stuff/
 trainer.zip
 state.json
