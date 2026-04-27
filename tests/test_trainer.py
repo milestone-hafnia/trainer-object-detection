@@ -87,7 +87,7 @@ def test_inference_script():
 
 
 def test_predict_script():
-    from visualize import main
+    from scripts.visualize import main
 
     main(samples=2)
 
