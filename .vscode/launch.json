@@ -31,7 +31,7 @@
             "program": "${workspaceFolder}/scripts/visualize.py",
             "args": [
                 "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
-                //"--model-path", "./checkpoint_models/best_ema", // best_ema, best_regular, best_total
+                // "--model-path", "./checkpoint_models/vehicle_only", // vehicle_only
                 "--inference.threshold", "0.35",
 
             ],
@@ -43,7 +43,7 @@
             "program": "${workspaceFolder}/scripts/benchmark.py",
             "args": [
                 "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
-                //"--model-path", "./checkpoint_models/best_ema", // best_ema, best_regular, best_total
+                "--dataset-class-mapping", "Midwest2OnlyVehicle",
                 "--model-class-mapping", "COCO2OnlyVehicle",
                 "--samples", "10"
             ],
@@ -54,7 +54,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/scripts/benchmark.py",
             "args": [
-                "--model-path", "./checkpoint_models/best_ema", // best_ema, best_regular, best_total
+                "--model-path", "./checkpoint_models/vehicle_only", // vehicle_only
                 "--dataset-class-mapping", "Midwest2OnlyVehicle",
                 "--samples", "10"
             ],
@@ -65,7 +65,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/scripts/inference.py",
             "args": [
-                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
+                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview    
                 "--model-class-mapping", "COCO2OnlyVehicle",
                 "--samples", "10"
             ],

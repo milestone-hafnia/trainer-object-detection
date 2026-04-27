@@ -1,0 +1,14 @@
+{
+    "name": "RFDETRNano",
+    "task": {
+        "primitive": "Bbox",
+        "classes": [
+            {
+                "name": "Vehicle",
+                "attributes": null
+            }
+        ],
+        "name": "object_detection"
+    },
+    "model_weight_path": "checkpoint_best_ema.pth"
+}

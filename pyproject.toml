@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "cyclopts==4.5.1",
-    "hafnia",
+    "hafnia>=0.7.4",
     "pytest>=9.0.1",
     "rfdetr>=1.5.2",
 ]
@@ -28,6 +28,3 @@ packages = ["src/trainer_object_detection", "scripts"]
 extend-include = ["*.ipynb"]
 line-length = 120                                         # This should match the 'line-length' in 'pyproject.toml'
 lint.select = ["C4", "E", "F", "B", "I", "W", "RUF", "Q"]
-
-[tool.uv.sources]
-hafnia = { git = "https://github.com/milestone-hafnia/hafnia.git", rev = "benchmark" }

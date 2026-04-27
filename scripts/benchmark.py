@@ -60,9 +60,7 @@ def main(
         dataset = HafniaDataset.from_path(path_dataset)
     else:
         # The small/public sample dataset is returned by name
-        # dataset = HafniaDataset.from_name("midwest-vehicle-detection", version="1.0.0")
-        path_dataset = Path(".data") / "dataset_download" / "midwest-detection-traffic" / "hidden"
-        dataset = HafniaDataset.from_path(path_dataset)
+        dataset = HafniaDataset.from_name("midwest-vehicle-detection", version="1.0.0")
 
     path_model_config = Path(model_path) / "model_config.json"
     model = WrappedModel.load_model(path_model_config, inference_config=inference)

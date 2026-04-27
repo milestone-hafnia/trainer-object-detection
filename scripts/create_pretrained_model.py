@@ -1,3 +1,5 @@
+import shutil
+
 from hafnia.dataset.hafnia_dataset_types import TaskInfo
 
 from trainer_object_detection.wrapped_model import (
@@ -26,4 +28,7 @@ if __name__ == "__main__":
             task=TaskInfo.from_class_names(primitive=model_primitive, class_names=pretrained_class_names),
             model_weight_path=model_trainer.model_config.pretrain_weights,
         )
-        pretrained_model_cfg.save_model(PATH_PRETRAINED_MODELS / d.name)
+        path_model = PATH_PRETRAINED_MODELS / d.name
+        shutil.rmtree(path_model, ignore_errors=True)  # Remove old model folder if it exists
+        path_model.mkdir(parents=True, exist_ok=True)
+        pretrained_model_cfg.save_model(path_model)

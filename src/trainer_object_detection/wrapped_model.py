@@ -26,9 +26,8 @@ class ModelOption:
 MODEL_OPTIONS = [
     ModelOption(name="RFDETRNano", pretrained=True, supported=True),
     ModelOption(name="RFDETRSmall", pretrained=False, supported=True),
-    ModelOption(name="RFDETRMedium", pretrained=True, supported=True),
+    ModelOption(name="RFDETRMedium", pretrained=False, supported=True),
     # AvailableModel(name="RFDETRBase", pretrained=False, supported=False),
-    # AvailableModel(name="RFDETRLarge", pretrained=False, supported=False),
     ModelOption(name="RFDETRSegPreview", pretrained=True, supported=True),
 ]
 PATH_PRETRAINED_MODELS = Path(__file__).parent.parent.parent / "pretrained_models"
