@@ -71,7 +71,7 @@ def test_train_script():
 
     if not torch.cuda.is_available():
         pytest.skip("CUDA is not available. Skipping integration test.")
-    main(project_name="test_project", epochs=1, samples=20)
+    main(project_name="test_project", epochs=1, samples=40)
 
 
 def test_benchmark_script():
