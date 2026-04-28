@@ -9,6 +9,7 @@ from cyclopts import App, Parameter
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from hafnia.dataset.hafnia_dataset_types import ModelInfo
 from hafnia.dataset.primitives import Primitive
 from hafnia.experiment.command_builder import auto_save_command_builder_schema
 from hafnia.log import user_logger
@@ -105,6 +106,13 @@ def _build_app(model_path: str, inference_config: InferenceConfig) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @fastapi_app.get("/info", response_model=ModelInfo)
+    async def info():
+        model: Optional[WrappedModel] = state["model"]
+        if model is None:
+            raise HTTPException(status_code=503, detail="Model not loaded")
+        return model.get_model_info()
 
     @fastapi_app.get("/ping", response_model=HealthResponse)
     async def ping():

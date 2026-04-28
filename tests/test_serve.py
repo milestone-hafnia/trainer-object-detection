@@ -2,6 +2,8 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from hafnia.dataset.hafnia_dataset_types import ModelInfo
+from hafnia.dataset.primitives import Bbox
 
 from scripts.serve import _build_app
 from trainer_object_detection.wrapped_model import InferenceConfig
@@ -22,6 +24,24 @@ def test_ping(client):
     response = client.get("/ping")
     assert response.status_code == 200
     assert response.json() == {"status": "Healthy"}
+
+
+def test_info(client):
+    response = client.get("/info")
+    assert response.status_code == 200, response.text
+    body = response.json()
+
+    model = ModelInfo.model_validate(body)  # Validate response schema
+    assert model.name == "RFDETRNano"
+
+    tasks = model.tasks
+    assert isinstance(tasks, list) and len(tasks) > 0
+    task = tasks[0]
+    assert task.name, "Task should have a name"
+    assert task.primitive is Bbox, "Task should declare a primitive"
+
+    classes = task.get_class_names()
+    assert isinstance(classes, list) and len(classes) > 0, "Task should expose its class list"
 
 
 def test_predict(client):
