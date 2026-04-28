@@ -66,6 +66,8 @@ default_inference_config = InferenceConfig()
 class PredictionResponse(BaseModel):
     model_name: str
     task_name: str
+
+    # SerializeAsAny primitives are serialized correctly for different primitive types (e.g. Bbox, Classification, etc.)
     predictions: List[SerializeAsAny[Primitive]]
 
 
