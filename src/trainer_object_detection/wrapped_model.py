@@ -27,7 +27,7 @@ MODEL_OPTIONS = [
     ModelOption(name="RFDETRNano", pretrained=True, supported=True),
     ModelOption(name="RFDETRSmall", pretrained=False, supported=True),
     ModelOption(name="RFDETRMedium", pretrained=False, supported=True),
-    # AvailableModel(name="RFDETRBase", pretrained=False, supported=False),
+    ModelOption(name="RFDETRLarge", pretrained=False, supported=True),
     ModelOption(name="RFDETRSegPreview", pretrained=True, supported=True),
 ]
 PATH_PRETRAINED_MODELS = Path(__file__).parent.parent.parent / "pretrained_models"
@@ -146,6 +146,11 @@ def primitive_and_model_from_name(
         primitive = Bbox
         model_class = detr.RFDETRMedium
         model_config: config.RFDETRBaseConfig = config.RFDETRMediumConfig()
+
+    elif model_name == "RFDETRLarge":
+        primitive = Bbox
+        model_class = detr.RFDETRLarge
+        model_config: config.RFDETRBaseConfig = config.RFDETRLargeConfig()
 
     elif model_name == "RFDETRSegPreview":
         torch.backends.cudnn.enabled = False  # Disable cuDNN to avoid runtime errors with RFDETRSegPreview

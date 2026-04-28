@@ -1,0 +1,65 @@
+{
+    "cmd": "python scripts/serve.py",
+    "json_schema": {
+        "$defs": {
+            "InferenceConfig": {
+                "properties": {
+                    "compile": {
+                        "default": false,
+                        "title": "Compile",
+                        "type": "boolean"
+                    },
+                    "batch_size": {
+                        "default": 1,
+                        "title": "Batch Size",
+                        "type": "integer"
+                    },
+                    "threshold": {
+                        "default": 0.05,
+                        "title": "Threshold",
+                        "type": "number"
+                    }
+                },
+                "title": "InferenceConfig",
+                "type": "object"
+            }
+        },
+        "properties": {
+            "model_path": {
+                "default": "./pretrained_models/RFDETRNano",
+                "description": "Path to trained model",
+                "title": "Model Path",
+                "type": "string"
+            },
+            "inference": {
+                "$ref": "#/$defs/InferenceConfig",
+                "default": {
+                    "compile": false,
+                    "batch_size": 1,
+                    "threshold": 0.05
+                },
+                "description": "Inference configuration for the model"
+            },
+            "host": {
+                "default": "127.0.0.1",
+                "description": "Host interface to bind to",
+                "title": "Host",
+                "type": "string"
+            },
+            "port": {
+                "default": 8080,
+                "description": "Port to listen on",
+                "title": "Port",
+                "type": "integer"
+            }
+        },
+        "title": "mainArgs",
+        "type": "object"
+    },
+    "n_positional_args": 0,
+    "case_conversion": "kebab",
+    "parameter_prefix": "--",
+    "nested_parameter_handling": "dot",
+    "assignment_separator": "space",
+    "bool_handling": "flag-negation"
+}

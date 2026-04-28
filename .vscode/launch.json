@@ -65,9 +65,23 @@
             "request": "launch",
             "program": "${workspaceFolder}/scripts/inference.py",
             "args": [
-                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview    
+                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
                 "--model-class-mapping", "COCO2OnlyVehicle",
                 "--samples", "10"
+            ],
+        },
+        {
+            "name": "Model Serve",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/serve.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
+                "--inference.threshold", "0.5",
+                "--host", "127.0.0.1",
+                "--port", "8080"
             ],
         }
     ]
