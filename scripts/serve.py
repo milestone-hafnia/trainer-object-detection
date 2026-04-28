@@ -20,7 +20,7 @@ from trainer_object_detection import utils
 from trainer_object_detection.wrapped_model import InferenceConfig, WrappedModel
 
 """
-Lanches model serving with FastAPI
+Launches model serving with FastAPI
 
 # Launch the server with default RFDETRNano model and a threshold of 0.5:
 python scripts/serve.py --model-path ./pretrained_models/RFDETRNano --inference.threshold 0.5
