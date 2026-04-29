@@ -104,8 +104,8 @@ def main(
         dataset_dir=dataset_path.as_posix(),
         epochs=epochs,
         batch_size=batch_size,
-        learning_rate=learning_rate,
-        grad_accumulation_steps=grad_accumulation_steps,
+        lr=learning_rate,
+        grad_accum_steps=grad_accumulation_steps,
         output_dir=path_experiment.as_posix(),
     )
 
@@ -116,17 +116,9 @@ def main(
         model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(model_path))
         model_config.save_model(model_folder_path / model_path.stem)
 
-    # Move checkpoints to checkpoints folder (e.g. "checkpoint0000.pth", "checkpoint0010.pth")
-    # (Both models and checkpoints start with "checkpoint", so we exclude 'model_paths' from checkpoint models)
-    checkpoint_model_paths = set(path_experiment.glob("checkpoint*.pth")) - set(model_paths)
-    checkpoints_folder_path = logger.path_model_checkpoints()
-    for ckpt_path in checkpoint_model_paths:
-        model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(ckpt_path))
-        model_config.save_model(checkpoints_folder_path / ckpt_path.stem)
-
     # Move files to artifact folder
     artifact_folder_path = logger._path_artifacts()
-    check_for_files = ["log.txt", "metrics_plot.png", "events.out.tfevents*", "results.json"]
+    check_for_files = ["log.txt", "metrics.csv", "results.json"]
     for file_pattern in check_for_files:
         file_paths = list(path_experiment.glob(file_pattern))
         if len(file_paths) == 0:
