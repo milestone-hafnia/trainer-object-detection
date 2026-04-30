@@ -35,6 +35,9 @@ def main(
     batch_size: Annotated[int, Parameter(help="Batch size for training")] = 8,
     grad_accumulation_steps: Annotated[int, Parameter(help="Gradient accumulation steps")] = 1,
     learning_rate: Annotated[float, Parameter(help="Learning rate for optimizer")] = 0.001,
+    resolution: Annotated[
+        Optional[int], Parameter(help="Input resolution (square side in pixels). Defaults to each model's built-in value.")
+    ] = None,
     samples: Annotated[
         Optional[int], Parameter(help="Number of samples to use for training. Use for testing purposes.")
     ] = -1,
@@ -73,6 +76,7 @@ def main(
         "batch_size": batch_size,
         "grad_accumulation_steps": grad_accumulation_steps,
         "learning_rate": learning_rate,
+        "resolution": resolution,
         "dataset": dataset.info.dataset_name,
         "has_cuda": has_cuda,
     }
@@ -100,7 +104,7 @@ def main(
         user_logger.info("Early stopping before training was activated with '--stop_early' flag.")
         return None
 
-    model_trainer.train(
+    train_kwargs = dict(
         dataset_dir=dataset_path.as_posix(),
         epochs=epochs,
         batch_size=batch_size,
@@ -108,13 +112,16 @@ def main(
         grad_accum_steps=grad_accumulation_steps,
         output_dir=path_experiment.as_posix(),
     )
+    if resolution is not None:
+        train_kwargs["resolution"] = resolution
+    model_trainer.train(**train_kwargs)
 
     model_folder_path = logger.path_model()
     # Move final model weights to model folder (e.g. "checkpoint_best_regular.pth" and "checkpoint_best_total.pth")
     model_paths = list(path_experiment.glob("checkpoint_*.pth"))
-    for model_path in model_paths:
-        model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(model_path))
-        model_config.save_model(model_folder_path / model_path.stem)
+    for checkpoint_path in model_paths:
+        model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(checkpoint_path))
+        model_config.save_model(model_folder_path / checkpoint_path.stem)
 
     # Move files to artifact folder
     artifact_folder_path = logger._path_artifacts()
