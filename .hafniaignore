@@ -11,6 +11,9 @@
 *.jpg
 *.png
 *.py[cod]
+*.pth
+*.pt
+*.ckpt
 
 **.egg-info/
 
