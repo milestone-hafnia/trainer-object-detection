@@ -1,7 +1,7 @@
 # Trainer Package: Train Object Detection Model
 This project demonstrates an object detection trainer package for Hafnia Training-as-a-Service (Training-aaS), compatible with object detection datasets such as "coco-2017" and "midwest-vehicle-detection".
 
-Under the hood, this trainer package wraps the [RF-DETR](https://github.com/roboflow/rf-detr) model trainer by Roboflow. The training logic, model architecture, and core algorithms are provided by the upstream [`rfdetr`](https://pypi.org/project/rfdetr/) package — this repository adapts it to the Hafnia Training-aaS interface and dataset format. See [Acknowledgements](#acknowledgements), [License](#license), and [Citation](#citation) below.
+Under the hood, this trainer package wraps the [RF-DETR](https://github.com/roboflow/rf-detr) model trainer by Roboflow. The training logic, model architecture, and core algorithms are provided by the upstream [`rfdetr`](https://pypi.org/project/rfdetr/) package - this repository adapts it to the Hafnia Training-aaS interface and dataset format. See [Acknowledgements](#acknowledgements), [License](#license), and [Citation](#citation) below.
 
 > **Note:** This README covers the essential steps to get started. For more details on trainer packages and Training-aaS, visit the [trainer-classification README](https://github.com/milestone-hafnia/trainer-classification?tab=readme-ov-file#trainer-package-train-image-classification-model).
 
@@ -17,8 +17,8 @@ In this section, we will show how to launch model training using the Hafnia Trai
 2. **Select Dataset**  
    Choose your target dataset (e.g., `coco-2017` or `midwest-vehicle-detection`)
 
-3. **Upload Trainer Package**  
-   Download and upload the pre-built `trainer.zip` from: [trainer.zip](https://raw.githubusercontent.com/milestone-hafnia/trainer-object-detection/main/trainer.zip)
+3. **Select Trainer Package**  
+   Use the public trainer package provided by Hafnia. Select the "Or select existing trainer package" option. Select the "Public Trainers" tab and choose the "Object Detection Trainer" package. *You may also upload your own trainer package as described in the [Trainer Package Development](#trainer-package-development) section below. But for now, we will use the public trainer package provided by Hafnia.*
 
 4. **Configure Training**  
    - **Training command:** `python scripts/train.py`
@@ -64,8 +64,7 @@ With the Hafnia CLI installed, you can now create your own trainer package using
 hafnia trainer create-zip .
 ```
 
-This will create a `trainer.zip` file in the current folder, which can be uploaded to the Hafnia Web-portal as described 
-in the Quick Start section. 
+This will create a `trainer.zip` file in the current folder, which can be uploaded to the Hafnia Web-portal when creating a new experiment.
 
 To validate that the trainer package works and that we will have no syntax or run time errors, you can run and debug the trainer package locally in VS Code. 
 
@@ -77,6 +76,17 @@ This trainer package is designed to work in a local environment with VS Code. To
    Press `Ctrl+Shift+P` and search for `Python: Select Interpreter`.
 3. In the debug panel, select the configuration `Model Training` and press F5 or click the green play button 
    to start debugging. 
+
+### Scripts
+The [`scripts/`](scripts/) folder contains the entry points for training and a few related utilities. `train.py` is the primary script; the others are optional helpers for evaluating, inspecting, and serving models.
+
+- **[`train.py`](scripts/train.py)** - Main training script. Trains an RF-DETR model on a Hafnia dataset. Defaults to `RFDETRNano` with pretrained weights and supports overriding model, epochs, batch size, learning rate, resolution, and sample count from the command line. This is the script invoked by the default training command `python scripts/train.py`.
+- **[`benchmark.py`](scripts/benchmark.py)** - Evaluates a trained or pretrained model on a dataset split and reports detection metrics. Supports class-mapping options on both the model and dataset side, which is useful when a pretrained model (e.g. COCO-trained) is benchmarked against a dataset with a different label space.
+- **[`inference.py`](scripts/inference.py)** - Runs the model over a dataset split and writes the predictions back as a Hafnia dataset. Use this to produce a predictions dataset for downstream analysis or visualization.
+- **[`visualize.py`](scripts/visualize.py)** - Runs prediction on a small subset of a dataset split and saves rendered images with bounding-box overlays to disk. Handy for quick visual sanity-checks of a model.
+- **[`create_pretrained_model.py`](scripts/create_pretrained_model.py)** - Maintenance utility that downloads RF-DETR pretrained weights and writes them, together with a serialized model config, into [`pretrained_models/`](pretrained_models/). Run this once to populate the local pretrained model cache used by the other scripts.
+- **[`*.schema.json`](scripts/*.schema.json)** - What are all the JSON Schema files for? Well nothing YET! The schema files are auto generated and describe the available parameters for each script. In a future version of the platform, these files are 
+will help users build and validate script commands like this  `python scripts/train.py --model RFDETRNano --epochs 5` through the portal.
 
 
 ## Launch Experiment Directly from Command Line
@@ -99,8 +109,24 @@ hafnia experiment create --dataset midwest-detection-traffic --trainer-path . --
 # Example 3: Package and launch experiment with custom training command
 hafnia experiment create --dataset coco-2017 --trainer-path . --cmd "python scripts/train.py --model RFDETRSegPreview --batch_size 2  --epochs 3"
 
+
 ```
-In above example the `--trainer-path` argument points to the local trainer package folder, the `midwest-vehicle-detection` dataset will be used in training. In the second example, we will use  override the default training command and add custom training parameters specific to the trainer package.
+Above examples create both a trainer package and an experiment for each execution. You may also just create a trainer package without launching an experiment or launch
+an experiment with an existing trainer package.
+
+```bash
+# List available trainers
+hafnia trainer ls
+
+# List public trainers
+hafnia trainer ls --visibility public
+
+# Create trainer package without launching experiment
+hafnia trainer create .
+
+# Launch experiment with existing trainer package
+hafnia experiment create --dataset midwest-detection-traffic --trainer-id 8aa608ef-536d-42de-9577-d0a3167e375f
+```
 
 ## Build and Launch Trainer Package Locally
 Finally, this final section helps to debug your trainer package, if you get errors during the build phase. 
@@ -124,7 +150,7 @@ hafnia runc launch-local --dataset midwest-vehicle-detection  "python scripts/tr
 ---
 
 # Acknowledgements
-This trainer package is a thin wrapper around [RF-DETR](https://github.com/roboflow/rf-detr) by [Roboflow](https://roboflow.com/). All credit for the underlying detection model, training procedure, and pretrained weights belongs to the RF-DETR authors. This repository merely adapts RF-DETR to the Hafnia Training-aaS interface — please refer to the upstream repository for questions about model behavior, training internals, and roadmap.
+This trainer package is a thin wrapper around [RF-DETR](https://github.com/roboflow/rf-detr) by [Roboflow](https://roboflow.com/). All credit for the underlying detection model, training procedure, and pretrained weights belongs to the RF-DETR authors. This repository merely adapts RF-DETR to the Hafnia Training-aaS interface - please refer to the upstream repository for questions about model behavior, training internals, and roadmap.
 
 # License
 This wrapper repository is released under the [MIT License](LICENSE).
