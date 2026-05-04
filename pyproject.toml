@@ -30,4 +30,4 @@ line-length = 120                                         # This should match th
 lint.select = ["C4", "E", "F", "B", "I", "W", "RUF", "Q"]
 
 [tool.uv.sources]
-hafnia = { git = "https://github.com/milestone-hafnia/hafnia.git", rev = "Fix-windows-paths" }
+hafnia = { git = "https://github.com/milestone-hafnia/hafnia.git", rev = "main" }
