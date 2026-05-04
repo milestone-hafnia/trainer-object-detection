@@ -1,7 +1,7 @@
 {
-    "name": "RFDETRSmall",
+    "name": "RFDETRSegNano",
     "task": {
-        "primitive": "Bbox",
+        "primitive": "Bitmask",
         "classes": [
             {
                 "name": "NotDefined_000",
@@ -368,7 +368,7 @@
                 "attributes": null
             }
         ],
-        "name": "object_detection"
+        "name": "mask_detection"
     },
-    "model_weight_path": null
+    "model_weight_path": "rf-detr-seg-nano.pt"
 }

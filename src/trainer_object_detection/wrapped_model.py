@@ -25,10 +25,10 @@ class ModelOption:
 
 MODEL_OPTIONS = [
     ModelOption(name="RFDETRNano", pretrained=True, supported=True),
-    ModelOption(name="RFDETRSmall", pretrained=False, supported=True),
-    ModelOption(name="RFDETRMedium", pretrained=False, supported=True),
-    # AvailableModel(name="RFDETRBase", pretrained=False, supported=False),
-    ModelOption(name="RFDETRSegPreview", pretrained=True, supported=True),
+    # ModelOption(name="RFDETRSmall", pretrained=True, supported=True),
+    ModelOption(name="RFDETRMedium", pretrained=True, supported=True),
+    ModelOption(name="RFDETRLarge", pretrained=True, supported=True),
+    ModelOption(name="RFDETRSegNano", pretrained=True, supported=True),
 ]
 PATH_PRETRAINED_MODELS = Path(__file__).parent.parent.parent / "pretrained_models"
 
@@ -147,11 +147,15 @@ def primitive_and_model_from_name(
         model_class = detr.RFDETRMedium
         model_config: config.RFDETRBaseConfig = config.RFDETRMediumConfig()
 
-    elif model_name == "RFDETRSegPreview":
-        torch.backends.cudnn.enabled = False  # Disable cuDNN to avoid runtime errors with RFDETRSegPreview
+    elif model_name == "RFDETRLarge":
+        primitive = Bbox
+        model_class = detr.RFDETRLarge
+        model_config: config.RFDETRBaseConfig = config.RFDETRLargeConfig()
+
+    elif model_name == "RFDETRSegNano":
         primitive = Bitmask
-        model_class = detr.RFDETRSegPreview
-        model_config: config.RFDETRBaseConfig = config.RFDETRSegPreviewConfig()
+        model_class = detr.RFDETRSegNano
+        model_config: config.RFDETRBaseConfig = config.RFDETRSegNanoConfig()
     else:
         raise ValueError(f"Model {model_name} not recognized.")
 

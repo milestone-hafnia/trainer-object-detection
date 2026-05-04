@@ -1,4 +1,5 @@
 {
+    "name": "scripts/inference.py",
     "cmd": "python scripts/inference.py",
     "json_schema": {
         "$defs": {

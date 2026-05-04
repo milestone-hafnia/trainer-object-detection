@@ -6,12 +6,9 @@ from hafnia.dataset import image_visualizations
 from hafnia.dataset.dataset_names import SplitName
 from hafnia.dataset.hafnia_dataset import HafniaDataset
 from hafnia.dataset.hafnia_dataset_types import Sample
-from hafnia.experiment.command_builder import auto_save_command_builder_schema
-from hafnia.log import user_logger
 from hafnia.utils import get_dataset_path_in_hafnia_cloud, is_hafnia_cloud_job, progress_bar
 from PIL import Image
 
-from trainer_object_detection import utils
 from trainer_object_detection.wrapped_model import InferenceConfig, WrappedModel
 
 app = App(name="predict", help="Run prediction and save visualizations")

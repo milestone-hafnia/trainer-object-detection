@@ -1,7 +1,7 @@
 {
-    "name": "RFDETRSegPreview",
+    "name": "RFDETRLarge",
     "task": {
-        "primitive": "Bitmask",
+        "primitive": "Bbox",
         "classes": [
             {
                 "name": "NotDefined_000",
@@ -368,7 +368,7 @@
                 "attributes": null
             }
         ],
-        "name": "mask_detection"
+        "name": "object_detection"
     },
-    "model_weight_path": "rf-detr-seg-preview.pt"
+    "model_weight_path": "rf-detr-large-2026.pth"
 }

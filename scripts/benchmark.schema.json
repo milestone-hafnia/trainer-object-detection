@@ -1,4 +1,5 @@
 {
+    "name": "scripts/benchmark.py",
     "cmd": "python scripts/benchmark.py",
     "json_schema": {
         "$defs": {

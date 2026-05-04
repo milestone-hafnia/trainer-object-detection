@@ -1,6 +1,7 @@
 import shutil
 
 from hafnia.dataset.hafnia_dataset_types import TaskInfo
+from rfdetr.assets.coco_classes import COCO_CLASSES
 
 from trainer_object_detection.wrapped_model import (
     MODEL_OPTIONS,
@@ -19,9 +20,10 @@ if __name__ == "__main__":
         model_primitive, model_trainer = primitive_and_model_from_name(d.name, model_weights=model_weights)
 
         # Store model in serializable config format
-        max_class_index = max(model_trainer.class_names)
+        max_class_index = max(COCO_CLASSES)
+        model_class_names = COCO_CLASSES  # The model.class_names doesn't actually class names
         pretrained_class_names = [f"NotDefined_{i:03d}" for i in range(max_class_index + 1)]
-        for class_index, class_name in model_trainer.class_names.items():
+        for class_index, class_name in model_class_names.items():
             pretrained_class_names[class_index] = class_name
         pretrained_model_cfg = InitModelConfig(
             name=d.name,

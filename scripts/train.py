@@ -36,7 +36,8 @@ def main(
     grad_accumulation_steps: Annotated[int, Parameter(help="Gradient accumulation steps")] = 1,
     learning_rate: Annotated[float, Parameter(help="Learning rate for optimizer")] = 0.001,
     resolution: Annotated[
-        Optional[int], Parameter(help="Input resolution (square side in pixels). Defaults to each model's built-in value.")
+        Optional[int],
+        Parameter(help="Input resolution (square side in pixels). Defaults to each model's built-in value."),
     ] = None,
     samples: Annotated[
         Optional[int], Parameter(help="Number of samples to use for training. Use for testing purposes.")

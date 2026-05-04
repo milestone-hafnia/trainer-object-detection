@@ -1,4 +1,5 @@
 {
+    "name": "scripts/train.py",
     "cmd": "python scripts/train.py",
     "json_schema": {
         "properties": {
@@ -10,7 +11,7 @@
             },
             "model_path": {
                 "default": "./pretrained_models/RFDETRNano",
-                "description": "Model name or checkpoint path. Options: ['pretrained_models/RFDETRNano', 'pretrained_models/RFDETRSmall', 'pretrained_models/RFDETRMedium', 'pretrained_models/RFDETRSegPreview']",
+                "description": "Model name or checkpoint path. Options: ['pretrained_models/RFDETRNano', 'pretrained_models/RFDETRMedium', 'pretrained_models/RFDETRLarge', 'pretrained_models/RFDETRSegNano']",
                 "title": "Model Path",
                 "type": "string"
             },

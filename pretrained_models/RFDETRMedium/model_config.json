@@ -370,5 +370,5 @@
         ],
         "name": "object_detection"
     },
-    "model_weight_path": null
+    "model_weight_path": "rf-detr-medium.pth"
 }
