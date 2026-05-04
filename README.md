@@ -1,6 +1,7 @@
 # Trainer Package: Train Object Detection Model
-This project demonstrates an object detection trainer package for Hafnia Training-as-a-Service (Training-aaS), compatible with object detection datasets such as "coco-2017" and "midwest-vehicle-detection". 
+This project demonstrates an object detection trainer package for Hafnia Training-as-a-Service (Training-aaS), compatible with object detection datasets such as "coco-2017" and "midwest-vehicle-detection".
 
+Under the hood, this trainer package wraps the [RF-DETR](https://github.com/roboflow/rf-detr) model trainer by Roboflow. The training logic, model architecture, and core algorithms are provided by the upstream [`rfdetr`](https://pypi.org/project/rfdetr/) package — this repository adapts it to the Hafnia Training-aaS interface and dataset format. See [Acknowledgements](#acknowledgements), [License](#license), and [Citation](#citation) below.
 
 > **Note:** This README covers the essential steps to get started. For more details on trainer packages and Training-aaS, visit the [trainer-classification README](https://github.com/milestone-hafnia/trainer-classification?tab=readme-ov-file#trainer-package-train-image-classification-model).
 
@@ -118,4 +119,29 @@ hafnia runc build-local trainer.zip
 
 # Execute the Docker image locally with a desired dataset
 hafnia runc launch-local --dataset midwest-vehicle-detection  "python scripts/train.py"
+```
+
+---
+
+# Acknowledgements
+This trainer package is a thin wrapper around [RF-DETR](https://github.com/roboflow/rf-detr) by [Roboflow](https://roboflow.com/). All credit for the underlying detection model, training procedure, and pretrained weights belongs to the RF-DETR authors. This repository merely adapts RF-DETR to the Hafnia Training-aaS interface — please refer to the upstream repository for questions about model behavior, training internals, and roadmap.
+
+# License
+This wrapper repository is released under the [MIT License](LICENSE).
+
+The wrapped [`rfdetr`](https://github.com/roboflow/rf-detr) package and its Apache-designated model weights are distributed by Roboflow under the **Apache License 2.0**. Note that RF-DETR uses a split licensing model: the additional `rfdetr_plus` components and the RF-DETR-XL / 2XL detection models are licensed under **PML 1.0**, which has different terms (notably for commercial use). If you use those Plus components or weights via this trainer, you must comply with the PML 1.0 terms in addition to the Apache 2.0 terms that apply to the base package. Always consult the upstream [RF-DETR LICENSE](https://github.com/roboflow/rf-detr/blob/main/LICENSE) for authoritative terms.
+
+# Citation
+If you use this trainer package for research or publications, please cite the RF-DETR paper:
+
+```bibtex
+@misc{rf-detr,
+    title={RF-DETR: Neural Architecture Search for Real-Time Detection Transformers},
+    author={Isaac Robinson and Peter Robicheaux and Matvei Popov and Deva Ramanan and Neehar Peri},
+    year={2025},
+    eprint={2511.09554},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV},
+    url={https://arxiv.org/abs/2511.09554},
+}
 ```
