@@ -77,18 +77,24 @@ def test_train_script():
 def test_benchmark_script():
     from scripts.benchmark import main
 
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA is not available. Skipping integration test.")
     main(samples=2, model_class_mapping="COCO2OnlyVehicle", dataset_class_mapping="Midwest2OnlyVehicle")
 
 
 def test_inference_script():
     from scripts.inference import main
 
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA is not available. Skipping integration test.")
     main(samples=2)
 
 
 def test_predict_script():
     from scripts.visualize import main
 
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA is not available. Skipping integration test.")
     main(samples=2)
 
 
