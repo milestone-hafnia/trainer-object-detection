@@ -303,30 +303,30 @@ wheels = [
 
 [[package]]
 name = "boto3"
-version = "1.43.2"
+version = "1.43.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore" },
     { name = "jmespath" },
     { name = "s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/95/cd/bba36079f5d4bd63db7385e6b9dc1845db32407c3f18f56aaddafb75097f/boto3-1.43.2.tar.gz", hash = "sha256:be951cc22769fbcda73fac523b031ee38db45c3ae2b0d828c76b8f6e8e683073", size = 113108, upload-time = "2026-05-01T19:43:13.632Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0a/37/78c630d1308964aa9abf44951d9c4df776546ff37251ec2434944e205c4e/boto3-1.43.6.tar.gz", hash = "sha256:e6315effaf12b890b99956e6f8e2c3000a3f64e4ee91943cec3895ce9a836afb", size = 113153, upload-time = "2026-05-07T20:49:59.694Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/e5/c9cee72ef678dabcc27acaf8228a2d4157ad26b00e1cc5d48886f8a94c2c/boto3-1.43.2-py3-none-any.whl", hash = "sha256:796e859cfb5e93c55276ce746f8020f691eda6b68a0ec4ce4f6fd07a1cca6859", size = 140501, upload-time = "2026-05-01T19:43:10.5Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/e2/3c2eef44f55eafab256836d1d9479bd6a74f70c26cbfdc0639a0e23e4327/boto3-1.43.6-py3-none-any.whl", hash = "sha256:179601ec2992726a718053bf41e43c223ceba397d31ceab11f64d9c910d9fc3a", size = 140502, upload-time = "2026-05-07T20:49:57.8Z" },
 ]
 
 [[package]]
 name = "botocore"
-version = "1.43.2"
+version = "1.43.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2c/b0/65d4c85f16367fb6147d391652d0c386f24b029536f7026e7b98740166cd/botocore-1.43.2.tar.gz", hash = "sha256:7b2ec87b6d0720bff920451ce930e71c2a99cdea48d0eaa66ccf0b21ea747e03", size = 15301186, upload-time = "2026-05-01T19:42:59.748Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/79/a7/23d0f5028011455096a1eeac0ddf3cbe147b3e855e127342f8202552194d/botocore-1.43.6.tar.gz", hash = "sha256:b1e395b347356860398da42e61c808cf1e34b6fa7180cf2b9d87d986e1a06ba0", size = 15336070, upload-time = "2026-05-07T20:49:48.14Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/52/f57ded73f1527a18e0712281eb49c4ae240038bb4dc7083fd288b4adc811/botocore-1.43.2-py3-none-any.whl", hash = "sha256:b823454d751a1c24bb403b5b07ab65007689654abb21787df923684e0743976c", size = 14982693, upload-time = "2026-05-01T19:42:54.602Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/c8/6f47223840e8d8cfa8c9f7c0ec1b77970417f257fc885169ff4f6326ce09/botocore-1.43.6-py3-none-any.whl", hash = "sha256:b6d1fdbc6f65a5fe0b7e947823aa37535d3f39f3ba4d21110fab1f55bbbcc04b", size = 15017094, upload-time = "2026-05-07T20:49:44.964Z" },
 ]
 
 [[package]]
@@ -1459,8 +1459,8 @@ wheels = [
 
 [[package]]
 name = "hafnia"
-version = "0.7.4"
-source = { git = "https://github.com/milestone-hafnia/hafnia.git?rev=main#094701214690df54bb7f749f2d0ef9e97a04f751" }
+version = "0.7.5"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "boto3" },
     { name = "click" },
@@ -1483,6 +1483,10 @@ dependencies = [
     { name = "sagemaker-mlflow" },
     { name = "seedir" },
     { name = "xxhash" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1b/a2/ce5fa85d8227ce992327d35995fdda6282b7731f472ff49cc33bcbbf9d39/hafnia-0.7.5.tar.gz", hash = "sha256:5723e653057c70b040c4cbf897bffabe9f881e38559345f6e6e429864cdcd019", size = 13374790, upload-time = "2026-05-07T12:53:47.958Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/73/50/bdc969ac54c5a900596b0348b30b69e6c006e7b5dc357167873ae7d2fe41/hafnia-0.7.5-py3-none-any.whl", hash = "sha256:2ba9dd2577891e7f4f1e7cdf8ec4303d1988308d7b4dca8fd0eb2c407f044398", size = 179541, upload-time = "2026-05-07T12:53:46.44Z" },
 ]
 
 [[package]]
@@ -4154,15 +4158,15 @@ wheels = [
 
 [[package]]
 name = "sagemaker-mlflow"
-version = "0.3.0"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "boto3" },
-    { name = "mlflow" },
+    { name = "mlflow-skinny" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/83/00/79841c7743734c7aaea2258755b3c29729143d7b6f460d6d9568ad1d09de/sagemaker_mlflow-0.3.0.tar.gz", hash = "sha256:f1657bd1351c7312450b2642782298b8f40c2842fabc45649b9f2f15f7b4456e", size = 18137, upload-time = "2026-04-21T20:31:23.929Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f3/3a/dc35c82d169b015070a9cd49ab514d116df90316ad7689571b55f7dac4d8/sagemaker_mlflow-0.4.0.tar.gz", hash = "sha256:42a3a4b71a62cd78c2d52778e8372adc69543a25363aba1745be147afca43951", size = 18146, upload-time = "2026-05-05T23:28:46.766Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/8f/e2e440d6c4fe1dc7848887c693bb6d61d18f8837cf7bf0fa251ae697b0a9/sagemaker_mlflow-0.3.0-py3-none-any.whl", hash = "sha256:19581079984ebec02abb148d46bcbe4d10c1a3d6936d7cd39d24257d27a4fc76", size = 24682, upload-time = "2026-04-21T20:31:22.69Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/92/8ded10e9dea8ff588a391427a53f6ac474992fea2ffd73cf0d569c129d7c/sagemaker_mlflow-0.4.0-py3-none-any.whl", hash = "sha256:0c10990535de3a0f3a63f419ccdbf5648f18eb977926364c342936223579daa9", size = 24667, upload-time = "2026-05-05T23:28:45.464Z" },
 ]
 
 [[package]]
@@ -4651,15 +4655,15 @@ wheels = [
 
 [[package]]
 name = "sse-starlette"
-version = "3.4.1"
+version = "3.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "starlette" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/9a/f35932a8c0eb6b2287b66fa65a0321df8c84e4e355a659c1841a37c39fdb/sse_starlette-3.4.1.tar.gz", hash = "sha256:f780bebcf6c8997fe514e3bd8e8c648d8284976b391c8bed0bcb1f611632b555", size = 35127, upload-time = "2026-04-26T13:32:32.292Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/82/10cdfab4ab663a6b6bd624d33f55b2cfa41af5105be033a6d5d135a92c5f/sse_starlette-3.4.2.tar.gz", hash = "sha256:2f9a7f51ed84395a0427fb9f66cb1ec11f7899d977a72cbc9070b962a2e14489", size = 35236, upload-time = "2026-05-06T19:42:13.727Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/07/45c21ed03d708c477367305726b89919b020a3a2a01f72aaf5ad941caf35/sse_starlette-3.4.1-py3-none-any.whl", hash = "sha256:6b43cf21f1d574d582a6e1b0cfbde1c94dc86a32a701a7168c99c4475c6bd1d0", size = 16487, upload-time = "2026-04-26T13:32:30.819Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/27/351c71e803c56090d8d3bf9520422debeb8ed938871fd4f7ef519805a6c5/sse_starlette-3.4.2-py3-none-any.whl", hash = "sha256:6ea5d35b7ce979a3de5a0db5f77fe886b1616e4b3e1ad93fba502bd9b5fb662f", size = 16516, upload-time = "2026-05-06T19:42:12.201Z" },
 ]
 
 [[package]]
@@ -5059,7 +5063,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "cyclopts", specifier = "==4.5.1" },
-    { name = "hafnia", git = "https://github.com/milestone-hafnia/hafnia.git?rev=main" },
+    { name = "hafnia", specifier = ">=0.7.5" },
     { name = "pytest", specifier = ">=9.0.1" },
     { name = "rfdetr", extras = ["train", "loggers"], specifier = ">=1.6.5" },
 ]

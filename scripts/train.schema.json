@@ -2,6 +2,29 @@
     "name": "scripts/train.py",
     "cmd": "python scripts/train.py",
     "json_schema": {
+        "$defs": {
+            "InferenceConfig": {
+                "properties": {
+                    "compile": {
+                        "default": false,
+                        "title": "Compile",
+                        "type": "boolean"
+                    },
+                    "batch_size": {
+                        "default": 1,
+                        "title": "Batch Size",
+                        "type": "integer"
+                    },
+                    "threshold": {
+                        "default": 0.05,
+                        "title": "Threshold",
+                        "type": "number"
+                    }
+                },
+                "title": "InferenceConfig",
+                "type": "object"
+            }
+        },
         "properties": {
             "project_name": {
                 "default": "Trainer RF-DETR",
@@ -60,6 +83,21 @@
                 "description": "Input resolution (square side in pixels). Defaults to each model's built-in value.",
                 "title": "Resolution"
             },
+            "task_name": {
+                "anyOf": [
+                    {
+                        "type": "string",
+                        "title": "Select 'String'"
+                    },
+                    {
+                        "type": "null",
+                        "title": "Select None"
+                    }
+                ],
+                "default": null,
+                "description": "Dataset task name used for training the model. Use only this if the dataset has multiple tasks",
+                "title": "Task Name"
+            },
             "samples": {
                 "anyOf": [
                     {
@@ -80,6 +118,21 @@
                 "description": "Break script before training starts. Can be used to avoid long training times during testing.",
                 "title": "Stop Early",
                 "type": "boolean"
+            },
+            "inference_model_name": {
+                "default": "checkpoint_best_ema",
+                "description": "Inference model name or checkpoint path. Options: ['checkpoint_best_ema', 'checkpoint_best_regular', 'checkpoint_best_total']",
+                "title": "Inference Model Name",
+                "type": "string"
+            },
+            "inference_config": {
+                "$ref": "#/$defs/InferenceConfig",
+                "default": {
+                    "compile": true,
+                    "batch_size": 1,
+                    "threshold": 0.05
+                },
+                "description": "Inference configuration for the model"
             }
         },
         "title": "mainArgs",
