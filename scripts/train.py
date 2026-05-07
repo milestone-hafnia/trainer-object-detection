@@ -130,13 +130,19 @@ def main(
 
     model_folder_path = logger.path_model()
     # Move final model weights to model folder (e.g. "checkpoint_best_regular.pth" and "checkpoint_best_total.pth")
-    checkpoint_model_paths = list(path_experiment.glob("checkpoint_*.pth"))
-    model_paths = {}
-    for checkpoint_path in checkpoint_model_paths:
+    final_models = list(path_experiment.glob("checkpoint_*.pth"))
+    model_path = {}
+    for checkpoint_path in final_models:
         model_checkpoint_path = model_folder_path / checkpoint_path.name
         model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(checkpoint_path))
         model_config.save_model(model_checkpoint_path)
-        model_paths[checkpoint_path.stem] = model_checkpoint_path
+        model_path[checkpoint_path.stem] = model_checkpoint_path
+
+    checkpoint_model_paths = final_models  # For now we simply add final models as checkpoints
+    checkpoints_folder_path = logger.path_model_checkpoints()
+    for ckpt_path in checkpoint_model_paths:
+        model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(ckpt_path))
+        model_config.save_model(checkpoints_folder_path / ckpt_path.stem)
 
     # Move files to artifact folder
     artifact_folder_path = logger._path_artifacts()
@@ -149,7 +155,7 @@ def main(
             shutil.copy2(file_path, artifact_folder_path)
 
     #### 'TEST' split inference/benchmarking ####
-    inference_model_json = model_paths[inference_model_name] / MODEL_CONFIG_NAME
+    inference_model_json = model_path[inference_model_name] / MODEL_CONFIG_NAME
     inference_model = WrappedModel.load_model(inference_model_json, inference_config=inference_config)
     inference_model.optimize_for_inference()
 
