@@ -78,7 +78,7 @@ class InitModelConfig(BaseModel):
 
 
 class InferenceConfig(BaseModel):
-    compile: bool = False
+    compile: bool = True
     batch_size: int = 1
     threshold: float = 0.05
 

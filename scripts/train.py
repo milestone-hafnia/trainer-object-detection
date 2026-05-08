@@ -19,7 +19,6 @@ from trainer_object_detection import utils
 from trainer_object_detection.wrapped_model import MODEL_CONFIG_NAME, InferenceConfig, InitModelConfig, WrappedModel
 
 detr = utils.patch_to_support_experiment_tracker_with_hafnia(detr)
-default_inference_config = InferenceConfig(compile=True, batch_size=1, threshold=0.05)
 
 app = App(name="train", help="PyTorch Training")
 
@@ -62,9 +61,10 @@ def main(
         Parameter(help=f"Inference model name or checkpoint path. Options: {INFERENCE_MODEL_OPTIONS}"),
     ] = DEFAULT_INFERENCE_MODEL,
     inference_config: Annotated[
-        InferenceConfig, Parameter(help="Inference configuration for the model")
-    ] = default_inference_config,
+        Optional[InferenceConfig], Parameter(help="Inference configuration for the model")
+    ] = None,
 ):
+    inference_config = inference_config or InferenceConfig()
     # Check cuda availability
     has_cuda = torch.cuda.is_available()
     if has_cuda:
@@ -166,7 +166,7 @@ def main(
     dataset_with_predictions.samples.write_ndjson(path_predictions)  # Json for readability
 
     no_gt_data = dataset_test.samples.select(pl.col(task_info.primitive.column_name()).list.len()).sum().item() == 0
-    if no_gt_data:  # Skip metric calculation for tests sets without ground-truth annotations
+    if no_gt_data:  # Skip metric calculation for test sets without ground-truth annotations
         user_logger.warning("No ground-truth annotations found in the test set. Skipping metric calculation.")
         return logger
 
@@ -189,10 +189,10 @@ def remove_images_with_no_bboxes(dataset: HafniaDataset, model_primitive: Type[P
 
 def get_dataset_task_from_model_primitive(
     dataset: HafniaDataset,
-    model_primitive: str,
+    model_primitive: Type[Primitive],
     task_name: Optional[str] = None,
 ) -> TaskInfo:
-    """Logic to select dataset task that matches the model primitive"""
+    """Select the dataset task that matches the model primitive type."""
 
     # Get dataset tasks matching the model primitive
     matching_tasks = dataset.info.get_tasks_by_primitive(model_primitive)

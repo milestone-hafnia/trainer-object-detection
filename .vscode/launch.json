@@ -21,6 +21,7 @@
                 // "--model", "RFDETRSegPreview", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
                 //"--batch_size", "2",
                 "--epochs", "1",
+                "--inference-config.threshold", "0.04",
                 //"--stop_early", // Breaks script before training starts. Can be used to avoid long training times during testing.
             ],
         },

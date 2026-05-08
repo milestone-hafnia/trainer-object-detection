@@ -6,7 +6,7 @@
             "InferenceConfig": {
                 "properties": {
                     "compile": {
-                        "default": false,
+                        "default": true,
                         "title": "Compile",
                         "type": "boolean"
                     },
@@ -126,12 +126,16 @@
                 "type": "string"
             },
             "inference_config": {
-                "$ref": "#/$defs/InferenceConfig",
-                "default": {
-                    "compile": true,
-                    "batch_size": 1,
-                    "threshold": 0.05
-                },
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/InferenceConfig"
+                    },
+                    {
+                        "type": "null",
+                        "title": "Select None"
+                    }
+                ],
+                "default": null,
                 "description": "Inference configuration for the model"
             }
         },
