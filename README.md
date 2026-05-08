@@ -1,5 +1,5 @@
 # Trainer Package: Train Object Detection Model
-This project demonstrates an object detection trainer package for Hafnia Training-as-a-Service (Training-aaS), compatible with object detection datasets such as "coco-2017" and "midwest-vehicle-detection".
+This project demonstrates an object detection trainer package for Hafnia Training-as-a-Service (Training-aaS), compatible with object detection datasets such as "coco-2017" and "midwest-detection-traffic".
 
 Under the hood, this trainer package wraps the [RF-DETR](https://github.com/roboflow/rf-detr) model trainer by Roboflow. The training logic, model architecture, and core algorithms are provided by the upstream [`rfdetr`](https://pypi.org/project/rfdetr/) package - this repository adapts it to the Hafnia Training-aaS interface and dataset format. See [Acknowledgements](#acknowledgements), [License](#license), and [Citation](#citation) below.
 
@@ -15,7 +15,7 @@ In this section, we will show how to launch model training using the Hafnia Trai
    Navigate to the [experiments dashboard](https://hafnia.milestonesys.com/dashboard/training-aas/experiments) and click "Create Experiment"
 
 2. **Select Dataset**  
-   Choose your target dataset (e.g., `coco-2017` or `midwest-vehicle-detection`)
+   Choose your target dataset (e.g., `coco-2017` or `midwest-detection-traffic`)
 
 3. **Select Trainer Package**  
    Use the public trainer package provided by Hafnia. Select the "Or select existing trainer package" option. Select the "Public Trainers" tab and choose the "Object Detection Trainer" package. *You may also upload your own trainer package as described in the [Trainer Package Development](#trainer-package-development) section below. But for now, we will use the public trainer package provided by Hafnia.*
@@ -29,8 +29,41 @@ In this section, we will show how to launch model training using the Hafnia Trai
 
 That's it! You have successfully launched an object detection model training experiment using the Hafnia Training-aaS platform.
 
-For default training parameters, the trainer package converges in approximately 4 hours on the `midwest-vehicle-detection` dataset using the "Free Tier" configuration. 
+For default training parameters, the trainer package converges in approximately 4 hours on the `midwest-detection-traffic` dataset using the "Free Tier" configuration. 
 
+To check available parameters for training, run `python scripts/train.py --help`
+```bash
+python scripts/train.py --help
+
+Usage: train [ARGS]
+
+PyTorch Training
+
+╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --help (-h)  Display this message and exit.                                                                                                                                          │
+│ --version    Display application version.                                                                                                                                            │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ PROJECT-NAME --project-name                                Project name for the experiment [default: Trainer RF-DETR]                                                                │
+│ MODEL-PATH --model-path                                    Model name or checkpoint path. Options: ['pretrained_models/RFDETRNano', 'pretrained_models/RFDETRMedium',                │
+│                                                            'pretrained_models/RFDETRLarge', 'pretrained_models/RFDETRSegNano'] [default: ./pretrained_models/RFDETRNano]             │
+│ PRETRAINED --pretrained --no-pretrained                    Use pretrained weights [default: True]                                                                                    │
+│ EPOCHS --epochs                                            Number of epochs to train [default: 10]                                                                                   │
+│ BATCH-SIZE --batch-size                                    Batch size for training [default: 8]                                                                                      │
+│ GRAD-ACCUMULATION-STEPS --grad-accumulation-steps          Gradient accumulation steps [default: 1]                                                                                  │
+│ LEARNING-RATE --learning-rate                              Learning rate for optimizer [default: 0.001]                                                                              │
+│ RESOLUTION --resolution                                    Input resolution (square side in pixels). Defaults to each model's built-in value.                                        │
+│ TASK-NAME --task-name                                      Dataset task name used for training the model. Use only this if the dataset has multiple tasks                            │
+│ SAMPLES --samples                                          Number of samples to use for training. Use for testing purposes. [default: -1]                                            │
+│ STOP-EARLY --stop-early --no-stop-early                    Break script before training starts. Can be used to avoid long training times during testing. [default: False]            │
+│ INFERENCE-MODEL-NAME --inference-model-name                Inference model name or checkpoint path. Options: ['checkpoint_best_ema', 'checkpoint_best_regular',                      │
+│                                                            'checkpoint_best_total'] [default: checkpoint_best_ema]                                                                   │
+│ INFERENCE-CONFIG.COMPILE --inference-config.compile        Inference configuration for the model [default: True]                                                                     │
+│   --inference-config.no-compile                                                                                                                                                      │
+│ INFERENCE-CONFIG.BATCH-SIZE --inference-config.batch-size  Inference configuration for the model [default: 1]                                                                        │
+│ INFERENCE-CONFIG.THRESHOLD --inference-config.threshold    Inference configuration for the model [default: 0.05]                                                                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
 ---
 
 # Trainer Package Development
@@ -78,7 +111,7 @@ This trainer package is designed to work in a local environment with VS Code. To
    to start debugging. 
 
 ### Scripts
-The [`scripts/`](scripts/) folder contains the entry points for training and a few related utilities. `train.py` is the primary script; the others are optional helpers for evaluating, inspecting, and serving models.
+The [`scripts/`](scripts/) folder contains the entry points for training and a few related utilities. `train.py` is the primary script; the others are optional helpers for evaluating, inspecting, and serving models. Use `--help` on any script to see available command-line options.
 
 - **[`train.py`](scripts/train.py)** - Main training script. Trains an RF-DETR model on a Hafnia dataset. Defaults to `RFDETRNano` with pretrained weights and supports overriding model, epochs, batch size, learning rate, resolution, and sample count from the command line. This is the script invoked by the default training command `python scripts/train.py`.
 - **[`benchmark.py`](scripts/benchmark.py)** - Evaluates a trained or pretrained model on a dataset split and reports detection metrics. Supports class-mapping options on both the model and dataset side, which is useful when a pretrained model (e.g. COCO-trained) is benchmarked against a dataset with a different label space.
@@ -144,7 +177,7 @@ hafnia trainer create-zip .
 hafnia runc build-local trainer.zip
 
 # Execute the Docker image locally with a desired dataset
-hafnia runc launch-local --dataset midwest-vehicle-detection  "python scripts/train.py"
+hafnia runc launch-local --dataset midwest-detection-traffic  "python scripts/train.py"
 ```
 
 ---
