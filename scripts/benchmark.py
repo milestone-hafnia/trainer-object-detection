@@ -18,8 +18,6 @@ app = App(name="benchmark", help="Benchmark")
 
 CLASS_MAPPING_OPTIONS = [None, *utils.CLASS_MAPPINGS.keys()]
 
-default_inference_config = InferenceConfig()
-
 """ Benchmarking examples
 # Example: Benchmark pretrained model (RFDETRNano) for a vehicle detection task.
 # The tricky part for this benchmark is that RFDETRNano is pretrained on coco datasets lables while the
@@ -37,9 +35,7 @@ hafnia experiment create --recipe-id 8618234d-b4da-4aa9-bb3e-3be86bb50369 --trai
 @app.default
 def main(
     model_path: Annotated[str, Parameter(help=("Path to trained model"))] = "./pretrained_models/RFDETRNano",
-    inference: Annotated[
-        InferenceConfig, Parameter(help="Inference configuration for the model")
-    ] = default_inference_config,
+    inference: Annotated[Optional[InferenceConfig], Parameter(help="Inference configuration for the model")] = None,
     model_class_mapping: Annotated[
         Optional[str],
         Parameter(help=f"Class mapping to use for the model. Options: {CLASS_MAPPING_OPTIONS}"),
@@ -53,7 +49,7 @@ def main(
         Parameter(help="Limit the number of samples to run on. Useful for faster testing."),
     ] = None,
 ):
-
+    inference = inference or InferenceConfig()
     logger = HafniaLogger(project_name="Benchmarking RF-DETR")
     if is_hafnia_cloud_job():  # For hafnia cloud execution
         path_dataset = get_dataset_path_in_hafnia_cloud()  # The path to the full/hidden dataset is returned

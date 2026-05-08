@@ -18,15 +18,11 @@ app = App(name="inference", help="Run inference on a dataset")
 
 CLASS_MAPPING_OPTIONS = [None, *utils.CLASS_MAPPINGS.keys()]
 
-default_inference_config = InferenceConfig()
-
 
 @app.default
 def main(
     model_path: Annotated[str, Parameter(help=("Path to trained model"))] = "./pretrained_models/RFDETRNano",
-    inference: Annotated[
-        InferenceConfig, Parameter(help="Inference configuration for the model")
-    ] = default_inference_config,
+    inference: Annotated[Optional[InferenceConfig], Parameter(help="Inference configuration for the model")] = None,
     model_class_mapping: Annotated[
         Optional[str],
         Parameter(help=f"Class mapping to use for the model. Options: {CLASS_MAPPING_OPTIONS}"),
@@ -41,6 +37,7 @@ def main(
     ] = None,
 ):
 
+    inference = inference or InferenceConfig()
     logger = HafniaLogger(project_name="Inference RF-DETR")
     if is_hafnia_cloud_job():  # For hafnia cloud execution
         path_dataset = get_dataset_path_in_hafnia_cloud()  # The path to the full/hidden dataset is returned
