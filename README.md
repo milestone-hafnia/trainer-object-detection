@@ -22,14 +22,14 @@ In this section, we will show how to launch model training using the Hafnia Trai
 
 4. **Configure Training**  
    - **Training command:** `python scripts/train.py`
-   - **Configuration:** Select "Free Tier" or "Professional" based on your needs
+   - **Configuration:** Select "Lite" or "Professional" based on your needs
 
 5. **Launch & Monitor**  
    Click "Create Experiment" and monitor progress in the dashboard
 
 That's it! You have successfully launched an object detection model training experiment using the Hafnia Training-aaS platform.
 
-For default training parameters, the trainer package converges in approximately 4 hours on the `midwest-detection-traffic` dataset using the "Free Tier" configuration. 
+For default training parameters, the trainer package converges in approximately 4 hours on the `midwest-detection-traffic` dataset using the "Lite" configuration. 
 
 To check available parameters for training, run `python scripts/train.py --help`
 ```bash
