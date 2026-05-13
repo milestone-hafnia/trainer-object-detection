@@ -1459,7 +1459,7 @@ wheels = [
 
 [[package]]
 name = "hafnia"
-version = "0.7.6"
+version = "0.7.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "boto3" },
@@ -1480,13 +1480,12 @@ dependencies = [
     { name = "pydantic" },
     { name = "rich" },
     { name = "s5cmd" },
-    { name = "sagemaker-mlflow" },
     { name = "seedir" },
     { name = "xxhash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8d/b2/840530f37da618e786675e43cd1f2253784bd20e734b4629915d572efb80/hafnia-0.7.6.tar.gz", hash = "sha256:d910553c5dea91861199595e60eaee03f53e9d6c0fc3e23b0a0bf72a31d7e4b2", size = 13381264, upload-time = "2026-05-11T19:35:32.498Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/6e/4b503a821db74dbabfe72139bfb1f9e1f7c8974ddbc41bc36fe011983199/hafnia-0.7.7.tar.gz", hash = "sha256:9fb2437d68e9362fe51e2dff9da5d8eab12e3fa498f9268fbafb01134b375f4e", size = 13381080, upload-time = "2026-05-13T09:54:57.982Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/e2/b80d11b8b9c25d2470585e8743528babe45172176d7e874d75490745da3e/hafnia-0.7.6-py3-none-any.whl", hash = "sha256:dfdc623211ffe31d2f235fcb5fbdf3931a035723f8f70932a1d650b3ae2760f0", size = 180147, upload-time = "2026-05-11T19:35:31.365Z" },
+    { url = "https://files.pythonhosted.org/packages/11/5d/d72989b7d6a8f3513a23f29535e461da483814e03d2c7c986b06412f47fd/hafnia-0.7.7-py3-none-any.whl", hash = "sha256:e8f6914971d5db5d2a85f254569696aec8d2176641d8dbc682eb458cbf3c27fa", size = 180187, upload-time = "2026-05-13T09:54:55.998Z" },
 ]
 
 [[package]]
@@ -4157,19 +4156,6 @@ wheels = [
 ]
 
 [[package]]
-name = "sagemaker-mlflow"
-version = "0.4.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "boto3" },
-    { name = "mlflow-skinny" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/3a/dc35c82d169b015070a9cd49ab514d116df90316ad7689571b55f7dac4d8/sagemaker_mlflow-0.4.0.tar.gz", hash = "sha256:42a3a4b71a62cd78c2d52778e8372adc69543a25363aba1745be147afca43951", size = 18146, upload-time = "2026-05-05T23:28:46.766Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b6/92/8ded10e9dea8ff588a391427a53f6ac474992fea2ffd73cf0d569c129d7c/sagemaker_mlflow-0.4.0-py3-none-any.whl", hash = "sha256:0c10990535de3a0f3a63f419ccdbf5648f18eb977926364c342936223579daa9", size = 24667, upload-time = "2026-05-05T23:28:45.464Z" },
-]
-
-[[package]]
 name = "scikit-learn"
 version = "1.7.2"
 source = { registry = "https://pypi.org/simple" }
@@ -4655,15 +4641,15 @@ wheels = [
 
 [[package]]
 name = "sse-starlette"
-version = "3.4.3"
+version = "3.4.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "starlette" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/64/13/3cafb96bceb02949f265bbdf1cbcea2810271ae709e4aa35e980f90c07fd/sse_starlette-3.4.3.tar.gz", hash = "sha256:a7f6d87cf482cf38b911c31075811c7f8b4efbada8ac9d5199a8e239fed513c9", size = 35247, upload-time = "2026-05-11T17:23:41.987Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f7/2b/58abc2d1fd397e7dde08e947e05c884d8ef2f78d5e2588c17a12d42d6994/sse_starlette-3.4.4.tar.gz", hash = "sha256:07e0fa0460138baf25cdd5fb28683472c3995dc1642225191b3832d62526bcb0", size = 31819, upload-time = "2026-05-12T17:37:17.019Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fe/a4/c888212b19dd432110d4a78dbc5e6c1bc7476e5fff2f2df2ea9f298b0003/sse_starlette-3.4.3-py3-none-any.whl", hash = "sha256:bf8a90d76192062f01b55095593606bfc7edd0e3ad481339a6e16e7890bc9367", size = 16514, upload-time = "2026-05-11T17:23:40.352Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/67/805710444ea8cc75fbf70b920ed431a560c4bf9c57f7d5a3117213189399/sse_starlette-3.4.4-py3-none-any.whl", hash = "sha256:3f4dd50d8aed2771a091f3a83000323fc3844541c16b4fe585ae2420cc6df973", size = 16514, upload-time = "2026-05-12T17:37:15.601Z" },
 ]
 
 [[package]]
@@ -5063,7 +5049,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "cyclopts", specifier = "==4.5.1" },
-    { name = "hafnia", specifier = ">=0.7.6" },
+    { name = "hafnia", specifier = "==0.7.7" },
     { name = "pytest", specifier = ">=9.0.1" },
     { name = "rfdetr", extras = ["train", "loggers"], specifier = ">=1.6.5" },
 ]
