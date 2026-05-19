@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 from typing import Annotated, Optional, Type
 
@@ -7,7 +6,9 @@ import torch
 from cyclopts import App, Parameter
 from hafnia import utils as hafnia_utils
 from hafnia.dataset.benchmark.benchmark import metric_calculations, run_inference_on_dataset
-from hafnia.dataset.hafnia_dataset import HafniaDataset, SplitName, TaskInfo
+from hafnia.dataset.dataset_names import SampleField, SplitName
+from hafnia.dataset.hafnia_dataset import HafniaDataset
+from hafnia.dataset.hafnia_dataset_types import TaskInfo
 from hafnia.dataset.primitives import Primitive
 from hafnia.experiment import HafniaLogger
 from hafnia.experiment.command_builder import auto_save_command_builder_schema
@@ -145,16 +146,6 @@ def main(
         model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(ckpt_path))
         model_config.save_model(checkpoints_folder_path / ckpt_path.stem)
 
-    # Move files to artifact folder
-    artifact_folder_path = logger._path_artifacts()
-    check_for_files = ["log.txt", "metrics.csv", "results.json"]
-    for file_pattern in check_for_files:
-        file_paths = list(path_experiment.glob(file_pattern))
-        if len(file_paths) == 0:
-            user_logger.warning(f"No files found for pattern: {file_pattern}")
-        for file_path in file_paths:
-            shutil.copy2(file_path, artifact_folder_path)
-
     #### 'TEST' split inference/benchmarking ####
     inference_model_json = model_path[inference_model_name] / MODEL_CONFIG_NAME
     inference_model = WrappedModel.load_model(inference_model_json, inference_config=inference_config)
@@ -162,9 +153,12 @@ def main(
 
     dataset_with_predictions = run_inference_on_dataset(dataset=dataset_test, model=inference_model)
 
-    # Save predictions to artifact folder
-    path_predictions = artifact_folder_path / "predictions.jsonl"
-    dataset_with_predictions.samples.write_ndjson(path_predictions)  # Json for readability
+    # Experiment output folder
+    path_experiment_output_folder = logger._path_artifacts()
+    # Save predictions to experiment output folder (drops unneeded columns)
+    drop_columns = [SampleField.FILE_PATH, SampleField.VIDEO_INFO, SampleField.CAMERA_INFO, SampleField.META]
+    dataset_with_predictions.samples = dataset_with_predictions.samples.drop(drop_columns, strict=False)
+    dataset_with_predictions.write_annotations(path_experiment_output_folder)
 
     no_gt_data = dataset_test.samples.select(pl.col(task_info.primitive.column_name()).list.len()).sum().item() == 0
     if no_gt_data:  # Skip metric calculation for test sets without ground-truth annotations
