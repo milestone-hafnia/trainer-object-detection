@@ -76,7 +76,7 @@ def main(
     logger = HafniaLogger(project_name=project_name)
 
     if hafnia_utils.is_hafnia_cloud_job():  # For hafnia cloud execution
-        path_dataset = hafnia_utils.get_dataset_path_in_hafnia_cloud()  # The path to hidden dataset is returned
+        path_dataset = hafnia_utils.get_dataset_path_in_hafnia_cloud()  # The path to hidden dataset
         dataset = HafniaDataset.from_path(path_dataset)
     else:
         dataset = HafniaDataset.from_name("eccv-cross-city", version="1.0.0")
