@@ -1,5 +1,5 @@
-import json
-import shutil
+import tempfile
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Type, Union
@@ -42,36 +42,43 @@ class InitModelConfig(BaseModel):
         _, model_trainer = primitive_and_model_from_name(self.name, model_weights=self.model_weight_path)
         return model_trainer
 
-    def save_model(self, path_model_folder: Path):
-        path_model_folder.mkdir(parents=True, exist_ok=True)
-        # Path should be relative
-        if self.model_weight_path is not None:
-            model_path = Path(self.model_weight_path).name
-            new_model_weight_path = path_model_folder / model_path
-            shutil.copy2(self.model_weight_path, new_model_weight_path)
-            self.model_weight_path = model_path  # Relative path in the config json
+    def save_model(self, path_archive: Union[str, Path]):
+        """Save the model as a single compressed (zip) archive at ``path_archive``.
 
-        path_json_file = path_model_folder / MODEL_CONFIG_NAME
-        config_json = self.model_dump_json(indent=4)
-        path_json_file.write_text(config_json)
+        The archive bundles the serialized model config (with a relative weight path) together
+        with the weights file. Any existing archive at the destination is overwritten.
+        """
+        path_archive = Path(path_archive)
+        path_archive.parent.mkdir(parents=True, exist_ok=True)
+
+        # The config stores the weights as a relative filename so it resolves inside the archive.
+        weight_name = None
+        if self.model_weight_path is not None:
+            weight_name = Path(self.model_weight_path).name
+        config_json = self.model_copy(update={"model_weight_path": weight_name}).model_dump_json(indent=4)
+
+        with zipfile.ZipFile(path_archive, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr(MODEL_CONFIG_NAME, config_json)
+            if self.model_weight_path is not None:
+                archive.write(self.model_weight_path, arcname=weight_name)
 
     @staticmethod
-    def load_model(path_json: Union[str, Path], use_weights: bool) -> "InitModelConfig":
-        path_json = Path(path_json)
-        model_config_dict = json.loads(path_json.read_text())
-        model_config = InitModelConfig.model_validate(model_config_dict)
-        if model_config.model_weight_path is not None:
-            model_config.model_weight_path = (path_json.parent / model_config.model_weight_path).as_posix()
+    def load_model(path_archive: Union[str, Path], use_weights: bool) -> "InitModelConfig":
+        path_archive = Path(path_archive)
+        # The weights are extracted to a temporary directory that persists for the lifetime of
+        # the process, so they remain on disk when the trainer loads them via ``get_trainer``.
+        extract_dir = Path(tempfile.mkdtemp(prefix="trainer_model_"))
+        model_config: InitModelConfig = _load_config_and_weights(path_archive, extract_dir)
 
         if use_weights and model_config.model_weight_path is None:
             user_logger.warning(
-                f"The specified model '{path_json}' does not have pretrained weights available, but "
+                f"The specified model '{path_archive}' does not have pretrained weights available, but "
                 "'pretrained=True' was set. The model will be trained from scratch."
             )
 
         if not use_weights and model_config.model_weight_path is not None:
             user_logger.warning(
-                f"The specified model '{path_json}' has pretrained weights available, but "
+                f"The specified model '{path_archive}' has pretrained weights available, but "
                 "'pretrained=False' was set. The model will be trained from scratch without using the pretrained weights."
             )
         return model_config
@@ -105,16 +112,15 @@ class WrappedModel(InferenceModel):
         return bboxes
 
     @staticmethod
-    def load_model(path_json: Union[str, Path], inference_config: InferenceConfig) -> "WrappedModel":
-        path_json = Path(path_json)
-        model_config_dict = json.loads(path_json.read_text())
-        model_config = InitModelConfig.model_validate(model_config_dict)
-
-        model_weight_path = None
-        if model_config.model_weight_path is not None:
-            model_weight_path = path_json.parent / model_config.model_weight_path
-
-        primitive, model = primitive_and_model_from_name(model_config.name, model_weights=str(model_weight_path))
+    def load_model(path_archive: Union[str, Path], inference_config: InferenceConfig) -> "WrappedModel":
+        path_archive = Path(path_archive)
+        # Weights are extracted into a temporary directory and loaded into the model while the
+        # directory is still alive; the extracted file is no longer needed once the model is built.
+        with tempfile.TemporaryDirectory(prefix="trainer_model_") as extract_dir:
+            model_config = _load_config_and_weights(path_archive, Path(extract_dir))
+            primitive, model = primitive_and_model_from_name(
+                model_config.name, model_weights=str(model_config.model_weight_path)
+            )
 
         if primitive != model_config.task.primitive:
             raise ValueError(
@@ -123,6 +129,21 @@ class WrappedModel(InferenceModel):
             )
 
         return WrappedModel(model=model, task=model_config.task, inference_config=inference_config)
+
+
+def _load_config_and_weights(path_archive: Path, extract_dir: Path) -> InitModelConfig:
+    """Read the model config from a zipped model archive and extract its weights into ``extract_dir``.
+
+    The returned config's ``model_weight_path`` is rewritten to the absolute path of the extracted
+    weights file, or left as ``None`` when the archive contains no weights.
+    """
+    with zipfile.ZipFile(path_archive, "r") as archive:
+        model_config = InitModelConfig.model_validate_json(archive.read(MODEL_CONFIG_NAME))
+        if model_config.model_weight_path is not None:
+            weight_name = Path(model_config.model_weight_path).name
+            archive.extract(weight_name, path=extract_dir)
+            model_config.model_weight_path = (extract_dir / weight_name).as_posix()
+    return model_config
 
 
 def primitive_and_model_from_name(

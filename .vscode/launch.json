@@ -31,7 +31,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/scripts/visualize.py",
             "args": [
-                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
+                "--model-path", "./pretrained_models/RFDETRNano.zip", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
                 // "--model-path", "./checkpoint_models/vehicle_only", // vehicle_only
                 "--inference.threshold", "0.35",
 
@@ -43,20 +43,9 @@
             "request": "launch",
             "program": "${workspaceFolder}/scripts/benchmark.py",
             "args": [
-                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
+                "--model-path", "./pretrained_models/RFDETRNano.zip", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
                 "--dataset-class-mapping", "Midwest2OnlyVehicle",
                 "--model-class-mapping", "COCO2OnlyVehicle",
-                "--samples", "10"
-            ],
-        },
-        {
-            "name": "Model benchmark (checkpoint)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/scripts/benchmark.py",
-            "args": [
-                "--model-path", "./checkpoint_models/vehicle_only", // vehicle_only
-                "--dataset-class-mapping", "Midwest2OnlyVehicle",
                 "--samples", "10"
             ],
         },
@@ -66,7 +55,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/scripts/benchmark.py",
             "args": [
-                "--model-path", "./pretrained_models/RFDETRNano", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
+                "--model-path", "./pretrained_models/RFDETRNano.zip", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
                 "--model-class-mapping", "COCO2OnlyVehicle",
                 "--output-path", "./.data/inference_output",
                 "--samples", "10"

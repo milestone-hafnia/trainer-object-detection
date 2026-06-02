@@ -34,7 +34,9 @@ hafnia experiment create --recipe-id 8618234d-b4da-4aa9-bb3e-3be86bb50369 --trai
 
 @app.default
 def main(
-    model_path: Annotated[str, Parameter(help="Path to the trained model folder")] = "./pretrained_models/RFDETRNano",
+    model_path: Annotated[
+        str, Parameter(help="Path to the trained model archive (.zip)")
+    ] = "./pretrained_models/RFDETRNano.zip",
     inference: Annotated[Optional[InferenceConfig], Parameter(help="Inference configuration for the model")] = None,
     model_class_mapping: Annotated[
         Optional[str],
@@ -90,8 +92,13 @@ def main(
         # The small/public sample dataset is returned by name
         dataset = HafniaDataset.from_name("midwest-vehicle-detection", version="1.0.0")
 
-    path_model_config = Path(model_path) / "model_config.json"
-    model = WrappedModel.load_model(path_model_config, inference_config=inference)
+    # Prefer a user-selected checkpoint over the configured model when one is available.
+    checkpoint_model_path = utils.get_checkpoint_if_available(logger)
+    if checkpoint_model_path is not None:
+        user_logger.info(f"Using checkpoint '{checkpoint_model_path.name}' instead of '{model_path}'")
+        model_path = checkpoint_model_path.as_posix()
+
+    model = WrappedModel.load_model(model_path, inference_config=inference)
     model.optimize_for_inference()
 
     dataset_split = dataset.create_split_dataset(split_name=split_name)

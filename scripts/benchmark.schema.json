@@ -28,8 +28,8 @@
         "description": "Run a model on a Hafnia dataset split and compute detection metrics when ground truth is available.\n\nLoads the dataset (the hidden dataset when running on the Hafnia platform, otherwise a public\nsample dataset), runs the model on the requested split, and - when the split has ground-truth\nannotations - computes detection metrics and logs them through ``HafniaLogger``. When the split\nhas no ground truth (e.g. a held-out test set without labels) the metric step is skipped, so the\nsame script can also be used as a pure inference pass.\n\nThe ``model_class_mapping`` and ``dataset_class_mapping`` flags project predictions and/or\nground truth into a common label space, which is needed when a pretrained model (e.g. trained on\nCOCO) is benchmarked against a dataset with a different label space. When ``save_annotations`` is\nset (default), the dataset with predictions appended as a new prediction task on each sample is\nwritten - annotations only, no image data - to the experiment artifacts folder for downstream\nanalysis or visualization.",
         "properties": {
             "model_path": {
-                "default": "./pretrained_models/RFDETRNano",
-                "description": "Path to the trained model folder",
+                "default": "./pretrained_models/RFDETRNano.zip",
+                "description": "Path to the trained model archive (.zip)",
                 "title": "Model Path",
                 "type": "string"
             },
@@ -105,12 +105,13 @@
             }
         },
         "title": "mainArgs",
-        "type": "object"
+        "type": "object",
+        "positional_args": []
     },
-    "n_positional_args": 0,
     "case_conversion": "kebab",
     "parameter_prefix": "--",
     "nested_parameter_handling": "dot",
     "assignment_separator": "space",
-    "bool_handling": "flag-negation"
+    "bool_handling": "flag-negation",
+    "order": 100
 }

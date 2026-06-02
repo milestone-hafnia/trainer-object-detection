@@ -25,7 +25,7 @@
                 "type": "object"
             }
         },
-        "description": "Train an RF-DETR object detection model on a Hafnia dataset.\n\nLoads the dataset (the hidden dataset when running on the Hafnia platform, otherwise the\nsmall public sample dataset is used when executing locally), initializes an RF-DETR model from\nthe folder pointed to by ``model_path`` (optionally with pretrained weights), converts the\ntrain/val splits to COCO format and runs RF-DETR training.\n\nAfter training, every ``checkpoint_*.pth`` produced by RF-DETR is repackaged as a\nstandalone Hafnia model artifact (weights + serialized model config) under the experiment\nmodel and checkpoints folders. The checkpoint selected by ``inference_model_name`` is then\nloaded as a ``WrappedModel``, optimized for inference (e.g. ``torch.compile`` when enabled\nvia ``inference_config``) and run on the held-out test split. Predictions are written to\nthe experiment artifacts folder. When the test split has ground-truth annotations, detection\nmetrics are computed via ``metric_calculations`` and logged through ``HafniaLogger``; if no\nground truth is present the metric step is skipped with a warning.",
+        "description": "Train an RF-DETR object detection model on a Hafnia dataset.\n\nLoads the dataset (the hidden dataset when running on the Hafnia platform, otherwise the\nsmall public sample dataset is used when executing locally), initializes an RF-DETR model from\nthe compressed model archive pointed to by ``model_path`` (optionally with pretrained weights), converts the\ntrain/val splits to COCO format and runs RF-DETR training.\n\nAfter training, every ``checkpoint_*.pth`` produced by RF-DETR is repackaged as a\nstandalone compressed Hafnia model archive (weights + serialized model config bundled into a\nsingle ``.zip``) under the experiment model and checkpoints folders. The checkpoint selected\nby ``inference_model_name`` is then\nloaded as a ``WrappedModel``, optimized for inference (e.g. ``torch.compile`` when enabled\nvia ``inference_config``) and run on the held-out test split. Predictions are written to\nthe experiment artifacts folder. When the test split has ground-truth annotations, detection\nmetrics are computed via ``metric_calculations`` and logged through ``HafniaLogger``; if no\nground truth is present the metric step is skipped with a warning.",
         "properties": {
             "project_name": {
                 "default": "Trainer RF-DETR",
@@ -34,8 +34,8 @@
                 "type": "string"
             },
             "model_path": {
-                "default": "./pretrained_models/RFDETRNano",
-                "description": "Path to a pretrained model folder used as the training starting point. Options: ['pretrained_models/RFDETRNano', 'pretrained_models/RFDETRMedium', 'pretrained_models/RFDETRLarge', 'pretrained_models/RFDETRSegNano']",
+                "default": "./pretrained_models/RFDETRNano.zip",
+                "description": "Path to a compressed (zip) pretrained model used as the training starting point. Options: ['pretrained_models/RFDETRNano.zip', 'pretrained_models/RFDETRMedium.zip', 'pretrained_models/RFDETRLarge.zip', 'pretrained_models/RFDETRSegNano.zip']",
                 "title": "Model Path",
                 "type": "string"
             },
@@ -141,12 +141,13 @@
             }
         },
         "title": "mainArgs",
-        "type": "object"
+        "type": "object",
+        "positional_args": []
     },
-    "n_positional_args": 0,
     "case_conversion": "kebab",
     "parameter_prefix": "--",
     "nested_parameter_handling": "dot",
     "assignment_separator": "space",
-    "bool_handling": "flag-negation"
+    "bool_handling": "flag-negation",
+    "order": 0
 }

@@ -1,10 +1,13 @@
 import hashlib
 import subprocess
+import tempfile
 import zipfile
+from pathlib import Path
 
 import pytest
 import torch
 from hafnia.experiment.command_builder import (
+    DEFAULT_ORDER,
     CommandBuilderSchema,
     auto_save_command_builder_schema,
     path_of_function,
@@ -66,6 +69,85 @@ def test_predict_script():
     main(samples=2)
 
 
+class _StubLogger:
+    """Minimal stand-in for ``HafniaLogger`` exposing only the checkpoints path."""
+
+    def __init__(self, checkpoints_path):
+        self._checkpoints_path = Path(checkpoints_path)
+
+    def path_model_checkpoints(self):
+        return self._checkpoints_path
+
+
+def _make_checkpoint_zip(archive_path, class_names=("car", "truck")):
+    """Build a checkpoint archive (model config + dummy weights) the way ``train.py`` does."""
+    from hafnia.dataset.hafnia_dataset_types import TaskInfo
+    from hafnia.dataset.primitives import Bbox
+
+    from trainer_object_detection.wrapped_model import InitModelConfig
+
+    archive_path = Path(archive_path)
+    with tempfile.TemporaryDirectory() as source_dir:
+        weights_path = Path(source_dir) / f"{archive_path.stem}.pth"
+        weights_path.write_bytes(b"dummy-weights")
+        model_config = InitModelConfig(
+            name="RFDETRNano",
+            task=TaskInfo.from_class_names(primitive=Bbox, class_names=list(class_names)),
+            model_weight_path=str(weights_path),
+        )
+        model_config.save_model(archive_path)
+    return archive_path
+
+
+def test_get_checkpoint_if_available(tmp_path):
+    """A checkpoint is discovered only when a ``*.zip`` archive is present, deterministically."""
+    from trainer_object_detection.utils import get_checkpoint_if_available
+
+    checkpoints_dir = tmp_path / "checkpoints"
+    logger = _StubLogger(checkpoints_dir)
+
+    # Missing checkpoints directory -> no checkpoint
+    assert get_checkpoint_if_available(logger) is None
+
+    # Empty directory -> no checkpoint
+    checkpoints_dir.mkdir()
+    assert get_checkpoint_if_available(logger) is None
+
+    # Non-archive files are ignored
+    (checkpoints_dir / "state.json").write_text("{}")
+    assert get_checkpoint_if_available(logger) is None
+
+    # A single checkpoint archive is returned
+    _make_checkpoint_zip(checkpoints_dir / "checkpoint_best_ema.zip")
+    assert get_checkpoint_if_available(logger) == checkpoints_dir / "checkpoint_best_ema.zip"
+
+    # With multiple archives the selection is deterministic (sorted by name)
+    _make_checkpoint_zip(checkpoints_dir / "checkpoint_best_regular.zip")
+    assert get_checkpoint_if_available(logger) == checkpoints_dir / "checkpoint_best_ema.zip"
+
+
+def test_checkpoint_is_loaded(tmp_path):
+    """An available checkpoint is discovered and can be loaded back into a model config."""
+    from trainer_object_detection.utils import get_checkpoint_if_available
+    from trainer_object_detection.wrapped_model import InitModelConfig
+
+    checkpoints_dir = tmp_path / "checkpoints"
+    checkpoints_dir.mkdir()
+    archive_path = _make_checkpoint_zip(
+        checkpoints_dir / "checkpoint_best_ema.zip", class_names=["car", "bus", "truck"]
+    )
+    logger = _StubLogger(checkpoints_dir)
+
+    checkpoint_model_path = get_checkpoint_if_available(logger)
+    assert checkpoint_model_path == archive_path
+
+    # The discovered checkpoint loads, with its weights extracted to an existing file on disk.
+    model_config = InitModelConfig.load_model(checkpoint_model_path, use_weights=True)
+    assert model_config.name == "RFDETRNano"
+    assert [c.name for c in model_config.task.classes] == ["car", "bus", "truck"]
+    assert Path(model_config.model_weight_path).exists()
+
+
 def _script_main(script_name: str):
     """Import the ``main`` function from a script module by name."""
     import importlib
@@ -82,11 +164,15 @@ def test_command_builder_schema(script_name: str):
     path_function = path_of_function(main)
     path_function_schema = path_function.with_suffix(".schema.json")
 
+    if script_name == "train":
+        order = 0
+    else:
+        order = DEFAULT_ORDER
     if not path_function_schema.exists():
-        auto_save_command_builder_schema(main, cli_tool=CLI_TOOL)
+        auto_save_command_builder_schema(main, cli_tool=CLI_TOOL, order=order)
         pytest.fail("Launch schema file not found. Schema file have been generated. Please run the test again.")
 
-    actual_schema = CommandBuilderSchema.from_function(main, cli_tool=CLI_TOOL)
+    actual_schema = CommandBuilderSchema.from_function(main, cli_tool=CLI_TOOL, order=order)
     current_schema = CommandBuilderSchema.from_json_file(path_function_schema)
 
     schema_is_up_to_date = current_schema == actual_schema

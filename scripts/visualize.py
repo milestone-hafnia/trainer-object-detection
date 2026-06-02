@@ -18,7 +18,9 @@ default_inference_config = InferenceConfig(compile=True, batch_size=1, threshold
 
 @app.default
 def main(
-    model_path: Annotated[str, Parameter(help="Path to the trained model folder")] = "./pretrained_models/RFDETRNano",
+    model_path: Annotated[
+        str, Parameter(help="Path to the trained model archive (.zip)")
+    ] = "./pretrained_models/RFDETRNano.zip",
     inference: Annotated[
         InferenceConfig, Parameter(help="Inference configuration for the model")
     ] = default_inference_config,
@@ -61,14 +63,13 @@ def main(
     else:
         hafnia_dataset = HafniaDataset.from_name(dataset, version="latest")
 
-    path_model_config = Path(model_path) / "model_config.json"
-    model = WrappedModel.load_model(path_model_config, inference_config=inference)
+    model = WrappedModel.load_model(model_path, inference_config=inference)
     model.optimize_for_inference()
 
     dataset_split = hafnia_dataset.create_split_dataset(split_name=split_name)
 
     test_subset = dataset_split.select_samples(n_samples=samples, seed=42)
-    for i_sample, dict_sample in enumerate(progress_bar(test_subset)):
+    for i_sample, dict_sample in enumerate(progress_bar(test_subset, description="Visualizing predictions")):
         sample = Sample(**dict_sample)
 
         image = sample.read_image()

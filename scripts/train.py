@@ -17,13 +17,13 @@ from rfdetr import detr
 
 import trainer_object_detection.wrapped_model
 from trainer_object_detection import utils
-from trainer_object_detection.wrapped_model import MODEL_CONFIG_NAME, InferenceConfig, InitModelConfig, WrappedModel
+from trainer_object_detection.wrapped_model import InferenceConfig, InitModelConfig, WrappedModel
 
 detr = utils.patch_to_support_experiment_tracker_with_hafnia(detr)
 
 app = App(name="train", help="PyTorch Training")
 
-MODEL_NAME_OPTIONS = [f"pretrained_models/{d.name}" for d in trainer_object_detection.wrapped_model.MODEL_OPTIONS]
+MODEL_NAME_OPTIONS = [f"pretrained_models/{d.name}.zip" for d in trainer_object_detection.wrapped_model.MODEL_OPTIONS]
 
 DEFAULT_INFERENCE_MODEL = "checkpoint_best_ema"
 INFERENCE_MODEL_OPTIONS = [DEFAULT_INFERENCE_MODEL, "checkpoint_best_regular", "checkpoint_best_total"]
@@ -35,9 +35,12 @@ def main(
     model_path: Annotated[
         str,
         Parameter(
-            help=f"Path to a pretrained model folder used as the training starting point. Options: {MODEL_NAME_OPTIONS}"
+            help=(
+                "Path to a compressed (zip) pretrained model used as the training starting point. "
+                f"Options: {MODEL_NAME_OPTIONS}"
+            )
         ),
-    ] = "./pretrained_models/RFDETRNano",
+    ] = "./pretrained_models/RFDETRNano.zip",
     pretrained: Annotated[bool, Parameter(help="Initialize the model from pretrained weights")] = True,
     epochs: Annotated[int, Parameter(help="Number of epochs to train")] = 10,
     batch_size: Annotated[int, Parameter(help="Batch size for training")] = 8,
@@ -89,12 +92,13 @@ def main(
 
     Loads the dataset (the hidden dataset when running on the Hafnia platform, otherwise the
     small public sample dataset is used when executing locally), initializes an RF-DETR model from
-    the folder pointed to by ``model_path`` (optionally with pretrained weights), converts the
+    the compressed model archive pointed to by ``model_path`` (optionally with pretrained weights), converts the
     train/val splits to COCO format and runs RF-DETR training.
 
     After training, every ``checkpoint_*.pth`` produced by RF-DETR is repackaged as a
-    standalone Hafnia model artifact (weights + serialized model config) under the experiment
-    model and checkpoints folders. The checkpoint selected by ``inference_model_name`` is then
+    standalone compressed Hafnia model archive (weights + serialized model config bundled into a
+    single ``.zip``) under the experiment model and checkpoints folders. The checkpoint selected
+    by ``inference_model_name`` is then
     loaded as a ``WrappedModel``, optimized for inference (e.g. ``torch.compile`` when enabled
     via ``inference_config``) and run on the held-out test split. Predictions are written to
     the experiment artifacts folder. When the test split has ground-truth annotations, detection
@@ -120,8 +124,14 @@ def main(
     if samples is not None:
         dataset = dataset.select_samples(n_samples=samples)
 
-    inference_model_json = Path(model_path) / MODEL_CONFIG_NAME
-    model_config = InitModelConfig.load_model(inference_model_json, use_weights=pretrained)
+    checkpoint_model_path = utils.get_checkpoint_if_available(logger)
+    if checkpoint_model_path is not None:
+        user_logger.info(f"Using checkpoint '{checkpoint_model_path.name}' as pretrained model")
+        model_path = checkpoint_model_path.as_posix()
+        # Resuming from a checkpoint always uses its weights, regardless of the '--pretrained' flag.
+        pretrained = True
+
+    model_config = InitModelConfig.load_model(model_path, use_weights=pretrained)
     model_primitive = model_config.task.primitive
 
     model_trainer = model_config.get_trainer()
@@ -136,6 +146,12 @@ def main(
         "dataset": dataset.info.dataset_name,
         "has_cuda": has_cuda,
     }
+
+    if has_cuda:
+        configuration["device"] = "cuda"
+        configuration["num_gpus"] = torch.cuda.device_count()
+        configuration["gpu_names"] = [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())]
+
     logger.log_configuration(configuration)
 
     task_info = get_dataset_task_from_model_primitive(dataset, model_primitive, task_name)
@@ -166,25 +182,25 @@ def main(
     )
 
     model_folder_path = logger.path_model()
-    # Move final model weights to model folder (e.g. "checkpoint_best_regular.pth" and "checkpoint_best_total.pth")
+    # Repackage each final checkpoint as a single compressed model archive in the model folder
+    # (e.g. "checkpoint_best_regular.zip" and "checkpoint_best_total.zip").
     final_models = list(path_experiment.glob("checkpoint_*.pth"))
     model_path = {}
     for checkpoint_path in final_models:
         model_name = checkpoint_path.stem  # e.g. "checkpoint_best_regular"
-        model_checkpoint_path = model_folder_path / model_name
+        model_checkpoint_path = model_folder_path / f"{model_name}.zip"
         model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(checkpoint_path))
         model_config.save_model(model_checkpoint_path)
         model_path[model_name] = model_checkpoint_path
 
-    checkpoint_model_paths = final_models  # For now we simply add final models as checkpoints
     checkpoints_folder_path = logger.path_model_checkpoints()
+    checkpoint_model_paths = final_models  # For now we simply add final models as checkpoints
     for ckpt_path in checkpoint_model_paths:
         model_config = InitModelConfig(name=model_config.name, task=task_info, model_weight_path=str(ckpt_path))
-        model_config.save_model(checkpoints_folder_path / ckpt_path.stem)
+        model_config.save_model(checkpoints_folder_path / f"{ckpt_path.stem}.zip")
 
     #### 'TEST' split inference/benchmarking ####
-    inference_model_json = model_path[inference_model_name] / MODEL_CONFIG_NAME
-    inference_model = WrappedModel.load_model(inference_model_json, inference_config=inference_config)
+    inference_model = WrappedModel.load_model(model_path[inference_model_name], inference_config=inference_config)
     inference_model.optimize_for_inference()
 
     dataset_with_predictions = run_inference_on_dataset(dataset=dataset_test, model=inference_model)
@@ -256,7 +272,7 @@ def get_dataset_task_from_model_primitive(
 
 if __name__ == "__main__":
     # Creates launch schema file for the CLI function 'main'
-    path_launch_schema = auto_save_command_builder_schema(main, cli_tool=utils.CLI_TOOL)
+    path_launch_schema = auto_save_command_builder_schema(main, cli_tool=utils.CLI_TOOL, order=0)
     user_logger.info(f"Launch schema saved to: {path_launch_schema}")
 
     app()
