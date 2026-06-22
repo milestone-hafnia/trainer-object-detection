@@ -69,6 +69,16 @@ def test_predict_script():
     main(samples=2)
 
 
+def test_export_onnx_script(tmp_path):
+    from scripts.export_onnx import main
+
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA is not available. Skipping integration test.")
+    main(output_dir=str(tmp_path))
+
+    assert len(list(tmp_path.glob("*.onnx"))) == 1, "Expected exactly one ONNX file to be exported."
+
+
 class _StubLogger:
     """Minimal stand-in for ``HafniaLogger`` exposing only the checkpoints path."""
 
@@ -156,7 +166,7 @@ def _script_main(script_name: str):
     return module.main
 
 
-@pytest.mark.parametrize("script_name", ["train", "benchmark"])
+@pytest.mark.parametrize("script_name", ["train", "benchmark", "export_onnx"])
 def test_command_builder_schema(script_name: str):
     """Test that the launch schema is up-to-date for each script."""
     main = _script_main(script_name)

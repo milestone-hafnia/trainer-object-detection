@@ -1,0 +1,84 @@
+{
+    "name": "scripts/export_onnx.py",
+    "cmd": "python scripts/export_onnx.py",
+    "json_schema": {
+        "description": "Export an RF-DETR model archive to ONNX format.\n\nLoads the model from the compressed archive pointed to by ``model_path`` (or a user-selected\ncheckpoint when one is available) and exports it to ONNX via RF-DETR's built-in exporter.\nThe resulting ``.onnx`` file is written to ``output_dir`` when provided, otherwise to the experiment artifacts\nfolder so it is collected as an experiment output on the Hafnia platform.\n\nThe export options mirror RF-DETR's ``export`` API: ``opset_version`` selects the ONNX opset,\n``batch_size`` bakes a static batch dimension into the graph (use ``dynamic_batch`` for a variable\nbatch dimension instead), ``resolution`` overrides the square input size, and ``backbone_only``\nexports just the feature extractor.",
+        "properties": {
+            "model_path": {
+                "default": "./pretrained_models/RFDETRNano.zip",
+                "description": "Path to the model archive (.zip) to export",
+                "title": "Model Path",
+                "type": "string"
+            },
+            "output_dir": {
+                "anyOf": [
+                    {
+                        "type": "string",
+                        "title": "Select 'String'"
+                    },
+                    {
+                        "type": "null",
+                        "title": "Select None"
+                    }
+                ],
+                "default": null,
+                "description": "Directory to write the ONNX file to. Defaults to the experiment artifacts folder. The file is named 'inference_model.onnx' ('backbone_model.onnx' with '--backbone-only').",
+                "title": "Output Dir"
+            },
+            "opset_version": {
+                "default": 17,
+                "description": "ONNX opset version to target",
+                "title": "Opset Version",
+                "type": "integer"
+            },
+            "batch_size": {
+                "default": 1,
+                "description": "Static batch size baked into the ONNX graph",
+                "title": "Batch Size",
+                "type": "integer"
+            },
+            "dynamic_batch": {
+                "default": false,
+                "description": "Export with a dynamic batch dimension so the model accepts variable batch sizes at runtime",
+                "title": "Dynamic Batch",
+                "type": "boolean"
+            },
+            "resolution": {
+                "anyOf": [
+                    {
+                        "type": "integer",
+                        "title": "Select 'Integer'"
+                    },
+                    {
+                        "type": "null",
+                        "title": "Select None"
+                    }
+                ],
+                "default": null,
+                "description": "Input resolution (square side in pixels) baked into the ONNX graph. Defaults to the model's built-in resolution. Must be divisible by the backbone's patch_size * num_windows.",
+                "title": "Resolution"
+            },
+            "backbone_only": {
+                "default": false,
+                "description": "Export only the backbone (feature extractor) instead of the full detection model",
+                "title": "Backbone Only",
+                "type": "boolean"
+            },
+            "verbose": {
+                "default": true,
+                "description": "Print export progress information",
+                "title": "Verbose",
+                "type": "boolean"
+            }
+        },
+        "title": "mainArgs",
+        "type": "object",
+        "positional_args": []
+    },
+    "case_conversion": "kebab",
+    "parameter_prefix": "--",
+    "nested_parameter_handling": "dot",
+    "assignment_separator": "space",
+    "bool_handling": "flag-negation",
+    "order": 100
+}
