@@ -37,7 +37,9 @@ def main(
         Parameter(
             help=(
                 "Path to a compressed (zip) pretrained model used as the training starting point. "
-                f"Options: {MODEL_NAME_OPTIONS}"
+                f"Options: {MODEL_NAME_OPTIONS}. Note: this is ignored when a checkpoint is available "
+                "(e.g. a checkpoint selected for the experiment on the Hafnia platform) - training "
+                "resumes from the checkpoint instead (and '--pretrained' is forced to True)."
             )
         ),
     ] = "./pretrained_models/RFDETRNano.zip",

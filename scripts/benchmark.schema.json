@@ -29,7 +29,7 @@
         "properties": {
             "model_path": {
                 "default": "./pretrained_models/RFDETRNano.zip",
-                "description": "Path to the trained model archive (.zip)",
+                "description": "Path to the trained model archive (.zip). Note: this is ignored when a checkpoint is available (e.g. a checkpoint selected for the experiment on the Hafnia platform) - the checkpoint is benchmarked instead of this model.",
                 "title": "Model Path",
                 "type": "string"
             },

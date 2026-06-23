@@ -35,7 +35,7 @@
             },
             "model_path": {
                 "default": "./pretrained_models/RFDETRNano.zip",
-                "description": "Path to a compressed (zip) pretrained model used as the training starting point. Options: ['pretrained_models/RFDETRNano.zip', 'pretrained_models/RFDETRMedium.zip', 'pretrained_models/RFDETRLarge.zip', 'pretrained_models/RFDETRSegNano.zip']",
+                "description": "Path to a compressed (zip) pretrained model used as the training starting point. Options: ['pretrained_models/RFDETRNano.zip', 'pretrained_models/RFDETRMedium.zip', 'pretrained_models/RFDETRLarge.zip', 'pretrained_models/RFDETRSegNano.zip']. Note: this is ignored when a checkpoint is available (e.g. a checkpoint selected for the experiment on the Hafnia platform) - training resumes from the checkpoint instead (and '--pretrained' is forced to True).",
                 "title": "Model Path",
                 "type": "string"
             },

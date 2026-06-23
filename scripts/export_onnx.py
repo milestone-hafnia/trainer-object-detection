@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -24,17 +25,15 @@ python scripts/export_onnx.py --model-path ./local_stuff/checkpoint_best_ema.zip
 @app.default
 def main(
     model_path: Annotated[
-        str, Parameter(help="Path to the model archive (.zip) to export")
-    ] = "./pretrained_models/RFDETRNano.zip",
-    output_dir: Annotated[
-        Optional[str],
+        str,
         Parameter(
             help=(
-                "Directory to write the ONNX file to. Defaults to the experiment artifacts folder. "
-                "The file is named 'inference_model.onnx' ('backbone_model.onnx' with '--backbone-only')."
+                "Path to the model archive (.zip) to export. Note: this is ignored when a checkpoint "
+                "is available (e.g. a checkpoint selected for the experiment on the Hafnia platform) - "
+                "the checkpoint is exported instead of this model."
             )
         ),
-    ] = None,
+    ] = "./pretrained_models/RFDETRNano.zip",
     opset_version: Annotated[int, Parameter(help="ONNX opset version to target")] = 17,
     batch_size: Annotated[int, Parameter(help="Static batch size baked into the ONNX graph")] = 1,
     dynamic_batch: Annotated[
@@ -59,8 +58,8 @@ def main(
 
     Loads the model from the compressed archive pointed to by ``model_path`` (or a user-selected
     checkpoint when one is available) and exports it to ONNX via RF-DETR's built-in exporter.
-    The resulting ``.onnx`` file is written to ``output_dir`` when provided, otherwise to the experiment artifacts
-    folder so it is collected as an experiment output on the Hafnia platform.
+    The resulting ``.onnx`` file is written to ``output_dir`` when provided, otherwise to the experiment model
+    folder so it is collected as a model artifact on the Hafnia platform.
 
     The export options mirror RF-DETR's ``export`` API: ``opset_version`` selects the ONNX opset,
     ``batch_size`` bakes a static batch dimension into the graph (use ``dynamic_batch`` for a variable
@@ -85,9 +84,7 @@ def main(
         user_logger.info("CUDA is not available. Exporting on CPU.")
         wrapped_model.model.model.device = torch.device("cpu")
 
-    if output_dir is None:
-        output_dir = logger.path_model()
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    output_dir = logger.path_model_checkpoints().as_posix()
 
     shape = (resolution, resolution) if resolution is not None else None
 
@@ -111,6 +108,13 @@ def main(
         backbone_only=backbone_only,
         verbose=verbose,
     )
+
+    # To store model as both a checkpoint and a model artifact
+    path_exported_models = logger.path_model()
+    onnx_models = Path(output_dir).glob("*.onnx")
+    for exported_file in onnx_models:
+        shutil.copy2(exported_file, path_exported_models)
+        user_logger.info(f"Copied exported model to '{path_exported_models / exported_file.name}'")
 
     return logger
 

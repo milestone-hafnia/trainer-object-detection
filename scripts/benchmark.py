@@ -35,7 +35,14 @@ hafnia experiment create --recipe-id 8618234d-b4da-4aa9-bb3e-3be86bb50369 --trai
 @app.default
 def main(
     model_path: Annotated[
-        str, Parameter(help="Path to the trained model archive (.zip)")
+        str,
+        Parameter(
+            help=(
+                "Path to the trained model archive (.zip). Note: this is ignored when a checkpoint is "
+                "available (e.g. a checkpoint selected for the experiment on the Hafnia platform) - the "
+                "checkpoint is benchmarked instead of this model."
+            )
+        ),
     ] = "./pretrained_models/RFDETRNano.zip",
     inference: Annotated[Optional[InferenceConfig], Parameter(help="Inference configuration for the model")] = None,
     model_class_mapping: Annotated[

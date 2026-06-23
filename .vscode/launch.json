@@ -60,15 +60,12 @@
             ],
         },
         {
-            "name": "Model Inference",
+            "name": "Model Export to ONNX",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/scripts/benchmark.py",
+            "program": "${workspaceFolder}/scripts/export_onnx.py",
             "args": [
-                "--model-path", "./pretrained_models/RFDETRNano.zip", // RFDETRNano, RFDETRSmall, RFDETRMedium, RFDETRLarge, RFDETRSegPreview
-                "--model-class-mapping", "COCO2OnlyVehicle",
-                "--output-path", "./.data/inference_output",
-                "--samples", "10"
+                "--model-path", "./local_stuff/checkpoint_best_ema.zip",
             ],
         }
     ]

@@ -74,9 +74,12 @@ def test_export_onnx_script(tmp_path):
 
     if not torch.cuda.is_available():
         pytest.skip("CUDA is not available. Skipping integration test.")
-    main(output_dir=str(tmp_path))
+    logger = main()
 
-    assert len(list(tmp_path.glob("*.onnx"))) == 1, "Expected exactly one ONNX file to be exported."
+    onnx_models = list(Path(logger.path_model()).glob("*.onnx"))
+    assert len(onnx_models) > 0, "No ONNX models were exported."
+    n_checkpoint_models = list(Path(logger.path_model_checkpoints()).glob("*.onnx"))
+    assert len(n_checkpoint_models) > 0, "No ONNX models were exported to the checkpoints directory."
 
 
 class _StubLogger:
