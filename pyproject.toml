@@ -6,10 +6,13 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "cyclopts==4.5.1",
+    "fastapi>=0.136.1",                   # REST serving (scripts/serve*.py)
     "hafnia>=0.7.10",
     "nvidia-ml-py>=13.595.45",           # To log GPU metrics in tracker
     "pytest>=9.0.1",
+    "python-multipart>=0.0.30",          # multipart/form-data uploads for the serve endpoint
     "rfdetr[train,loggers,onnx]==1.8.1",
+    "uvicorn>=0.46.0",                   # ASGI server for REST serving
 ]
 
 # Using hafnia:

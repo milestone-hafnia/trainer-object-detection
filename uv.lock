@@ -5293,19 +5293,25 @@ version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "cyclopts" },
+    { name = "fastapi" },
     { name = "hafnia" },
     { name = "nvidia-ml-py" },
     { name = "pytest" },
+    { name = "python-multipart" },
     { name = "rfdetr", extra = ["loggers", "onnx", "train"] },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "cyclopts", specifier = "==4.5.1" },
+    { name = "fastapi", specifier = ">=0.136.1" },
     { name = "hafnia", specifier = ">=0.7.10" },
     { name = "nvidia-ml-py", specifier = ">=13.595.45" },
     { name = "pytest", specifier = ">=9.0.1" },
+    { name = "python-multipart", specifier = ">=0.0.30" },
     { name = "rfdetr", extras = ["train", "loggers", "onnx"], specifier = "==1.8.1" },
+    { name = "uvicorn", specifier = ">=0.46.0" },
 ]
 
 [[package]]
