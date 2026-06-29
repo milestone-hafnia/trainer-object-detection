@@ -118,9 +118,37 @@ The [`scripts/`](scripts/) folder contains the entry points for training and a f
 - **[`benchmark.py`](scripts/benchmark.py)** - Runs a trained or pretrained model on a dataset split. When the split has ground-truth annotations, detection metrics are computed and logged; when it does not, the metric step is skipped and the script acts as a pure inference pass. Supports class-mapping options on both the model and dataset side (useful when a pretrained model, e.g. COCO-trained, is evaluated against a dataset with a different label space) and an `--output-path` flag to additionally write the predictions back as a Hafnia dataset for downstream analysis or visualization.
 - **[`visualize.py`](scripts/visualize.py)** - Runs prediction on a small subset of a dataset split and saves rendered images with bounding-box overlays to disk. Handy for quick visual sanity-checks of a model. Intended for local use only.
 - **[`export_onnx.py`](scripts/export_onnx.py)** - Exports a model archive to ONNX using RF-DETR's built-in exporter. Loads the model (or a user-selected checkpoint, like `train.py` and `benchmark.py`) and writes an `inference_model.onnx` (or `backbone_model.onnx` with `--backbone-only`) to the experiment model folder by default. Exposes the main RF-DETR export options: `--opset-version`, `--batch-size`, `--dynamic-batch`, `--resolution`, and `--backbone-only`.
+- **[`serve.py`](scripts/serve.py)** - Serves a model over a SageMaker-compatible REST API. Loads the model (or a user-selected checkpoint, like the other scripts), optimizes it for inference and starts an HTTP server (default port `8080`) exposing `GET /ping`, `GET /model-info` and `POST /invocations`. Predictions are returned as serialized Hafnia primitives. FastAPI is wired up directly in this script (no abstraction) - see [Serving / online inference](#serving--online-inference) below.
+- **[`serve_abstracted.py`](scripts/serve_abstracted.py)** - Same behavior as `serve.py`, but the serving itself is delegated to the reusable, model-agnostic serving layer in [`trainer_object_detection/serving.py`](src/trainer_object_detection/serving.py). The script keeps only the boilerplate (inference config, checkpoint resolution, model loading) and serves any `InferenceModel` with a single `run_inference_server(model, ...)` call.
 - **[`create_pretrained_model.py`](scripts/create_pretrained_model.py)** - Maintenance utility that downloads RF-DETR pretrained weights and writes them, together with a serialized model config, into a single compressed `pretrained_models/<ModelName>.zip` archive. Run this once to populate the local pretrained model cache used by the other scripts.
 - **[`*.schema.json`](scripts/*.schema.json)** - What are all the JSON Schema files for? Well nothing YET! The schema files are auto generated with the `auto_save_command_builder_schema` function and describe the available parameters for each script. In a future version of the platform, these files 
 will help users build and validate script commands like this  `python scripts/train.py --model RFDETRNano --epochs 5` through the portal.
+
+### Serving / online inference
+Both `serve.py` and `serve_abstracted.py` stand up the same REST API for online inference. The endpoints follow the AWS SageMaker real-time inference contract, so the server can be used both locally and behind a SageMaker endpoint:
+
+- `GET /ping` - health check (returns `200` once the model is loaded).
+- `GET /model-info` - the model's `ModelInfo` (tasks and classes) as JSON.
+- `POST /invocations` - run inference on the posted image(s).
+
+`POST /invocations` accepts three request encodings:
+- a raw image body (e.g. `Content-Type: image/jpeg`),
+- a `multipart/form-data` file upload (one file, or several for batch inference),
+- a JSON body with a base64-encoded `image`, or a list of `images` for batch inference.
+
+Predictions are returned as serialized Hafnia primitives (Bbox / Bitmask / Polygon ...) with normalized coordinates. A single image returns `{"predictions": [...], "image": {"height": H, "width": W}}`; a batch returns `{"results": [{...}, ...]}`.
+
+```bash
+# Start the server (use --inference.no-compile to skip the slow torch.compile when testing on CPU)
+python scripts/serve.py --model-path ./pretrained_models/RFDETRNano.zip --inference.no-compile
+
+# Query it
+curl localhost:8080/ping
+curl --data-binary @image.jpg -H "Content-Type: image/jpeg" localhost:8080/invocations
+curl -F "file=@image.jpg" localhost:8080/invocations
+```
+
+The two scripts are interchangeable: `serve.py` wires FastAPI by hand (simplest to read), while `serve_abstracted.py` uses the reusable `trainer_object_detection.serving` layer (`create_inference_app` / `run_inference_server`), which depends only on the `InferenceModel` interface and is intended to move into the `hafnia` package later.
 
 
 ## Launch Experiment Directly from Command Line

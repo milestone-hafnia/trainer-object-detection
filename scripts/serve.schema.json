@@ -1,0 +1,72 @@
+{
+    "name": "scripts/serve.py",
+    "cmd": "python scripts/serve.py",
+    "json_schema": {
+        "$defs": {
+            "InferenceConfig": {
+                "properties": {
+                    "compile": {
+                        "default": true,
+                        "title": "Compile",
+                        "type": "boolean"
+                    },
+                    "batch_size": {
+                        "default": 1,
+                        "title": "Batch Size",
+                        "type": "integer"
+                    },
+                    "threshold": {
+                        "default": 0.05,
+                        "title": "Threshold",
+                        "type": "number"
+                    }
+                },
+                "title": "InferenceConfig",
+                "type": "object"
+            }
+        },
+        "description": "Serve an RF-DETR model over a SageMaker-compatible REST API.\n\nLoads the model from the compressed archive pointed to by ``model_path`` (or a user-selected\ncheckpoint when one is available), optimizes it for inference, and starts an HTTP server exposing\n``GET /ping`` (health check), ``GET /model-info`` and ``POST /invocations`` (prediction).\n``POST /invocations`` accepts a raw image body (e.g. ``image/jpeg``), a ``multipart/form-data``\nfile upload, or a JSON body with a base64-encoded ``image`` (or a list of ``images`` for batch\ninference), and returns predictions as serialized Hafnia primitives.\n\nThis script wires FastAPI directly for simplicity; ``scripts/serve_abstracted.py`` does the same\nthing using the reusable serving layer in ``trainer_object_detection.serving``.",
+        "properties": {
+            "model_path": {
+                "default": "./pretrained_models/RFDETRNano.zip",
+                "description": "Path to the model archive (.zip) to serve. Note: this is ignored when a checkpoint is available (e.g. a checkpoint selected for the experiment on the Hafnia platform) - the checkpoint is served instead of this model.",
+                "title": "Model Path",
+                "type": "string"
+            },
+            "inference": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/InferenceConfig"
+                    },
+                    {
+                        "type": "null",
+                        "title": "Select None"
+                    }
+                ],
+                "default": null,
+                "description": "Inference configuration for the model"
+            },
+            "host": {
+                "default": "0.0.0.0",
+                "description": "Host interface to bind the server to",
+                "title": "Host",
+                "type": "string"
+            },
+            "port": {
+                "default": 8080,
+                "description": "Port to serve on (SageMaker expects 8080)",
+                "title": "Port",
+                "type": "integer"
+            }
+        },
+        "title": "mainArgs",
+        "type": "object",
+        "positional_args": []
+    },
+    "case_conversion": "kebab",
+    "parameter_prefix": "--",
+    "nested_parameter_handling": "dot",
+    "assignment_separator": "space",
+    "bool_handling": "flag-negation",
+    "order": 100
+}

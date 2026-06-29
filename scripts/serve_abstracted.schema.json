@@ -1,0 +1,72 @@
+{
+    "name": "scripts/serve_abstracted.py",
+    "cmd": "python scripts/serve_abstracted.py",
+    "json_schema": {
+        "$defs": {
+            "InferenceConfig": {
+                "properties": {
+                    "compile": {
+                        "default": true,
+                        "title": "Compile",
+                        "type": "boolean"
+                    },
+                    "batch_size": {
+                        "default": 1,
+                        "title": "Batch Size",
+                        "type": "integer"
+                    },
+                    "threshold": {
+                        "default": 0.05,
+                        "title": "Threshold",
+                        "type": "number"
+                    }
+                },
+                "title": "InferenceConfig",
+                "type": "object"
+            }
+        },
+        "description": "Serve an RF-DETR model over a SageMaker-compatible REST API.\n\nFunctionally identical to ``scripts/serve.py``, but the serving itself is delegated to the\nreusable ``trainer_object_detection.serving`` layer: this script only keeps the boilerplate for\nconfiguring inference, resolving checkpoints and building the model, then hands the model - any\nobject implementing the ``InferenceModel`` interface - to ``run_inference_server``. The serving\nlayer is model-agnostic and is intended to move into the ``hafnia`` package later.",
+        "properties": {
+            "model_path": {
+                "default": "./pretrained_models/RFDETRNano.zip",
+                "description": "Path to the model archive (.zip) to serve. Note: this is ignored when a checkpoint is available (e.g. a checkpoint selected for the experiment on the Hafnia platform) - the checkpoint is served instead of this model.",
+                "title": "Model Path",
+                "type": "string"
+            },
+            "inference": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/InferenceConfig"
+                    },
+                    {
+                        "type": "null",
+                        "title": "Select None"
+                    }
+                ],
+                "default": null,
+                "description": "Inference configuration for the model"
+            },
+            "host": {
+                "default": "0.0.0.0",
+                "description": "Host interface to bind the server to",
+                "title": "Host",
+                "type": "string"
+            },
+            "port": {
+                "default": 8080,
+                "description": "Port to serve on (SageMaker expects 8080)",
+                "title": "Port",
+                "type": "integer"
+            }
+        },
+        "title": "mainArgs",
+        "type": "object",
+        "positional_args": []
+    },
+    "case_conversion": "kebab",
+    "parameter_prefix": "--",
+    "nested_parameter_handling": "dot",
+    "assignment_separator": "space",
+    "bool_handling": "flag-negation",
+    "order": 100
+}

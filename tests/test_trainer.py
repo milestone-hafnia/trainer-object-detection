@@ -169,7 +169,7 @@ def _script_main(script_name: str):
     return module.main
 
 
-@pytest.mark.parametrize("script_name", ["train", "benchmark", "export_onnx"])
+@pytest.mark.parametrize("script_name", ["train", "benchmark", "export_onnx", "serve", "serve_abstracted"])
 def test_command_builder_schema(script_name: str):
     """Test that the launch schema is up-to-date for each script."""
     main = _script_main(script_name)
