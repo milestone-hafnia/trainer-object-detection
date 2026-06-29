@@ -20,8 +20,8 @@ app = App(name="serve", help="Serve an RF-DETR model over a REST API")
 # Serve the default pretrained model and query it
 python scripts/serve.py --model-path ./pretrained_models/RFDETRNano.zip --inference.no-compile
 curl localhost:8080/ping
-curl --data-binary @image.jpg -H "Content-Type: image/jpeg" localhost:8080/invocations
-curl -F "file=@image.jpg" localhost:8080/invocations
+curl --data-binary @tests/0e6d8275b955782b0cb8e9dafdebd086.png -H "Content-Type: image/jpeg" localhost:8080/invocations
+curl -F "file=@tests/0e6d8275b955782b0cb8e9dafdebd086.png" localhost:8080/invocations
 """
 
 # The loaded model, populated by ``main`` before the server starts. The route handlers below
