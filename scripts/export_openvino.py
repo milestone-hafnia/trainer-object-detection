@@ -306,7 +306,8 @@ def main(
             raise FileNotFoundError(f"No ONNX model was produced in temporary directory '{tmp_onnx_dir}'")
 
         for onnx_model_path in onnx_models:
-            openvino_xml_path = path_exported_checkpoints / f"{onnx_model_path.stem}.xml"
+            model_stem = f"{onnx_model_path.stem}_int8" if quantize else onnx_model_path.stem
+            openvino_xml_path = path_exported_checkpoints / f"{model_stem}.xml"
 
             user_logger.info(f"Converting temporary ONNX model '{onnx_model_path.name}' to OpenVINO IR")
 
