@@ -34,7 +34,7 @@ python scripts/export_openvino.py --model-path ./local_stuff/checkpoint_best_ema
 python scripts/export_openvino.py --resolution 384
 
 # Export and apply INT8 post-training quantization calibrated on a Hafnia dataset
-python scripts/export_openvino.py --resolution 384 --quantize --calibration-dataset eccv-cross-city
+python scripts/export_openvino.py --resolution 384 --quantize --calibration-dataset eccv-cross-city:1.0.0
 """
 
 
@@ -55,15 +55,17 @@ def _load_calibration_hafnia_dataset(calibration_dataset: Optional[str]) -> Hafn
 
     On the Hafnia platform the hidden dataset selected for the experiment is used (same as
     training). Locally, the public sample dataset is loaded by name - ``calibration_dataset``
-    when provided, otherwise the training default.
+    when provided, otherwise the training default. The name accepts an optional ``name:version``
+    shorthand (e.g. ``midwest-vehicle-detection:2.0.0``); without a version, ``1.0.0`` is used.
     """
     if hafnia_utils.is_hafnia_cloud_job():
         path_dataset = hafnia_utils.get_dataset_path_in_hafnia_cloud()
         return HafniaDataset.from_path(path_dataset)
 
-    dataset_name = calibration_dataset or _DEFAULT_CALIBRATION_DATASET
-    version = _DEFAULT_CALIBRATION_DATASET_VERSION if calibration_dataset is None else None
-    user_logger.info(f"Loading local calibration dataset '{dataset_name}'")
+    dataset_ref = calibration_dataset or _DEFAULT_CALIBRATION_DATASET
+    dataset_name, _, version = dataset_ref.partition(":")
+    version = version or _DEFAULT_CALIBRATION_DATASET_VERSION
+    user_logger.info(f"Loading local calibration dataset '{dataset_name}' (version {version})")
     return HafniaDataset.from_name(dataset_name, version=version)
 
 
@@ -208,9 +210,11 @@ def main(
         Optional[str],
         Parameter(
             help=(
-                "Name of the Hafnia dataset used to calibrate INT8 quantization. Only used when "
-                "'--quantize' is set and running locally (on the Hafnia platform the hidden "
-                f"experiment dataset is used instead). Defaults to '{_DEFAULT_CALIBRATION_DATASET}'."
+                "Name of the Hafnia dataset used to calibrate INT8 quantization. Accepts an optional "
+                "'name:version' suffix (e.g. 'midwest-vehicle-detection:2.0.0'); without a version "
+                f"'{_DEFAULT_CALIBRATION_DATASET_VERSION}' is used. Only used when '--quantize' is set and "
+                "running locally (on the Hafnia platform the hidden experiment dataset is used instead). "
+                f"Defaults to '{_DEFAULT_CALIBRATION_DATASET}'."
             )
         ),
     ] = None,
@@ -327,10 +331,12 @@ def main(
                     mean=wrapped_model.model.means,
                     std=wrapped_model.model.stds,
                 )
+                # Cap the subset size to the images actually available to avoid an NNCF warning.
+                subset_size = nncf_calibration_dataset.get_length() or _CALIBRATION_SUBSET_SIZE
                 openvino_model = nncf.quantize(
                     openvino_model,
                     nncf_calibration_dataset,
-                    subset_size=_CALIBRATION_SUBSET_SIZE,
+                    subset_size=subset_size,
                 )
 
             # Record the pre-/post-processing recipe in the IR so it can be recovered later.

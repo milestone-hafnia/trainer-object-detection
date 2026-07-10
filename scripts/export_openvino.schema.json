@@ -55,7 +55,7 @@
                     }
                 ],
                 "default": null,
-                "description": "Name of the Hafnia dataset used to calibrate INT8 quantization. Only used when '--quantize' is set and running locally (on the Hafnia platform the hidden experiment dataset is used instead). Defaults to 'eccv-cross-city'.",
+                "description": "Name of the Hafnia dataset used to calibrate INT8 quantization. Accepts an optional 'name:version' suffix (e.g. 'midwest-vehicle-detection:2.0.0'); without a version '1.0.0' is used. Only used when '--quantize' is set and running locally (on the Hafnia platform the hidden experiment dataset is used instead). Defaults to 'eccv-cross-city'.",
                 "title": "Calibration Dataset"
             },
             "backbone_only": {
