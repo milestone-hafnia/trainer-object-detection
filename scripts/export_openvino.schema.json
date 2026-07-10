@@ -1,0 +1,63 @@
+{
+    "name": "scripts/export_openvino.py",
+    "cmd": "python scripts/export_openvino.py",
+    "json_schema": {
+        "description": "Export an RF-DETR model archive to OpenVINO IR format.\n\nLoads the model from the compressed archive pointed to by ``model_path`` or from a user-selected\ncheckpoint when one is available.\n\nThe conversion pipeline is:\n\n    RF-DETR checkpoint/archive -> temporary ONNX -> OpenVINO IR\n\nThe temporary ONNX file is created only inside a temporary directory and is deleted after conversion.\nOnly the resulting OpenVINO IR files, ``.xml`` and ``.bin``, are stored as Hafnia artifacts.\n\nThe export options mirror the ONNX exporter where possible: ``batch_size`` bakes a static batch\ndimension into the graph, ``dynamic_batch`` enables variable batch size at runtime, ``resolution``\noverrides the square input size, and ``backbone_only`` exports just the feature extractor.",
+        "properties": {
+            "model_path": {
+                "default": "./pretrained_models/RFDETRNano.zip",
+                "description": "Path to the model archive (.zip) to export. Note: this is ignored when a checkpoint is available (e.g. a checkpoint selected for the experiment on the Hafnia platform) - the checkpoint is exported instead of this model.",
+                "title": "Model Path",
+                "type": "string"
+            },
+            "batch_size": {
+                "default": 1,
+                "description": "Static batch size baked into the exported graph",
+                "title": "Batch Size",
+                "type": "integer"
+            },
+            "dynamic_batch": {
+                "default": false,
+                "description": "Export with a dynamic batch dimension so the model accepts variable batch sizes at runtime",
+                "title": "Dynamic Batch",
+                "type": "boolean"
+            },
+            "resolution": {
+                "anyOf": [
+                    {
+                        "type": "integer",
+                        "title": "Select 'Integer'"
+                    },
+                    {
+                        "type": "null",
+                        "title": "Select None"
+                    }
+                ],
+                "default": null,
+                "description": "Input resolution (square side in pixels) baked into the exported graph. Defaults to the model's built-in resolution. Must be divisible by the backbone's patch_size * num_windows.",
+                "title": "Resolution"
+            },
+            "backbone_only": {
+                "default": false,
+                "description": "Export only the backbone (feature extractor) instead of the full detection model",
+                "title": "Backbone Only",
+                "type": "boolean"
+            },
+            "verbose": {
+                "default": true,
+                "description": "Print export progress information",
+                "title": "Verbose",
+                "type": "boolean"
+            }
+        },
+        "title": "mainArgs",
+        "type": "object",
+        "positional_args": []
+    },
+    "case_conversion": "kebab",
+    "parameter_prefix": "--",
+    "nested_parameter_handling": "dot",
+    "assignment_separator": "space",
+    "bool_handling": "flag-negation",
+    "order": 100
+}
