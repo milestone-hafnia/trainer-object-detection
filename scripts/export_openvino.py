@@ -98,6 +98,55 @@ def _input_height_width(ov_model: ov.Model) -> tuple[int, int]:
     return partial_shape[2].get_length(), partial_shape[3].get_length()
 
 
+def _set_processing_rt_info(
+    ov_model: ov.Model,
+    mean: Sequence[float],
+    std: Sequence[float],
+    backbone_only: bool,
+) -> None:
+    """Embed the pre-/post-processing recipe into the model's ``rt_info``.
+
+    Stores everything a consumer needs to reproduce RF-DETR preprocessing (channel order, resize,
+    scaling, normalization) and to interpret the raw detection outputs, so the correct handling can
+    be recovered later directly from the OpenVINO IR without external documentation.
+    """
+    # Preprocessing: BGR->RGB, resize to the model input, scale to [0, 1] (divide by 255),
+    # then normalize with (x - mean) / std where mean/std are in the [0, 1] range.
+    ov_model.set_rt_info(
+        "RF-DETR preprocessing: convert BGR->RGB, resize to 'resize_hw', divide pixels by "
+        "'scale_divisor' to get [0, 1], then normalize with (x - normalize_mean) / normalize_std.",
+        ["preprocessing", "description"],
+    )
+    ov_model.set_rt_info("RGB", ["preprocessing", "color_order"])
+    ov_model.set_rt_info(True, ["preprocessing", "reverse_input_channels"])
+    ov_model.set_rt_info("NCHW", ["preprocessing", "layout"])
+    ov_model.set_rt_info("bilinear", ["preprocessing", "resize_interpolation"])
+    ov_model.set_rt_info(255.0, ["preprocessing", "scale_divisor"])
+    ov_model.set_rt_info([float(v) for v in mean], ["preprocessing", "normalize_mean"])
+    ov_model.set_rt_info([float(v) for v in std], ["preprocessing", "normalize_std"])
+
+    partial_shape = ov_model.inputs[0].get_partial_shape()
+    if len(partial_shape) == 4 and partial_shape[2].is_static and partial_shape[3].is_static:
+        ov_model.set_rt_info(
+            [partial_shape[2].get_length(), partial_shape[3].get_length()],
+            ["preprocessing", "resize_hw"],
+        )
+
+    # Postprocessing only applies to the full detection model (the backbone emits raw features).
+    if backbone_only:
+        return
+
+    ov_model.set_rt_info(
+        "RF-DETR detection outputs: 'dets' = boxes as (cx, cy, w, h) normalized to [0, 1]; "
+        "'labels' = per-class logits, apply sigmoid to obtain confidences.",
+        ["postprocessing", "description"],
+    )
+    ov_model.set_rt_info("cxcywh_normalized", ["postprocessing", "dets", "box_format"])
+    ov_model.set_rt_info("class_logits", ["postprocessing", "labels", "type"])
+    ov_model.set_rt_info("sigmoid", ["postprocessing", "labels", "activation"])
+
+
+
 def _build_calibration_dataset(
     hafnia_dataset: HafniaDataset,
     input_height: int,
@@ -282,6 +331,14 @@ def main(
                     nncf_calibration_dataset,
                     subset_size=_CALIBRATION_SUBSET_SIZE,
                 )
+
+            # Record the pre-/post-processing recipe in the IR so it can be recovered later.
+            _set_processing_rt_info(
+                openvino_model,
+                mean=wrapped_model.model.means,
+                std=wrapped_model.model.stds,
+                backbone_only=backbone_only,
+            )
 
             ov.save_model(openvino_model, openvino_xml_path)
 
