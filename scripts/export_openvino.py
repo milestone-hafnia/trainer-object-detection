@@ -11,6 +11,7 @@ import torch
 import torchvision.transforms.functional as F  # noqa: N812
 from cyclopts import App, Parameter
 from hafnia import utils as hafnia_utils
+from hafnia.dataset import dataset_helpers
 from hafnia.dataset.dataset_names import SampleField, SplitName
 from hafnia.dataset.hafnia_dataset import HafniaDataset
 from hafnia.experiment import HafniaLogger
@@ -34,7 +35,7 @@ python scripts/export_openvino.py --model-path ./local_stuff/checkpoint_best_ema
 python scripts/export_openvino.py --resolution 384
 
 # Export and apply INT8 post-training quantization calibrated on a Hafnia dataset
-python scripts/export_openvino.py --resolution 384 --quantize --calibration-dataset eccv-cross-city:1.0.0
+python scripts/export_openvino.py --resolution 384 --quantize --calibration-dataset midwest-detection-traffic:1.0.0
 """
 
 
@@ -43,8 +44,7 @@ python scripts/export_openvino.py --resolution 384 --quantize --calibration-data
 _ONNX_OPSET_VERSION = 17
 
 # Default local dataset used for calibration (matches the training dataset in train.py).
-_DEFAULT_CALIBRATION_DATASET = "eccv-cross-city"
-_DEFAULT_CALIBRATION_DATASET_VERSION = "1.0.0"
+_DEFAULT_CALIBRATION_DATASET = "midwest-detection-traffic:1.0.0"
 
 # Number of images sampled from the dataset to estimate activation ranges during quantization.
 _CALIBRATION_SUBSET_SIZE = 300
@@ -55,18 +55,25 @@ def _load_calibration_hafnia_dataset(calibration_dataset: Optional[str]) -> Hafn
 
     On the Hafnia platform the hidden dataset selected for the experiment is used (same as
     training). Locally, the public sample dataset is loaded by name - ``calibration_dataset``
-    when provided, otherwise the training default. The name accepts an optional ``name:version``
-    shorthand (e.g. ``midwest-vehicle-detection:2.0.0``); without a version, ``1.0.0`` is used.
+    when provided, otherwise the training default. The name must include a version in the format
+    ``name:version`` (e.g. ``midwest-vehicle-detection:2.0.0``).
     """
     if hafnia_utils.is_hafnia_cloud_job():
         path_dataset = hafnia_utils.get_dataset_path_in_hafnia_cloud()
         return HafniaDataset.from_path(path_dataset)
 
     dataset_ref = calibration_dataset or _DEFAULT_CALIBRATION_DATASET
-    dataset_name, _, version = dataset_ref.partition(":")
-    version = version or _DEFAULT_CALIBRATION_DATASET_VERSION
-    user_logger.info(f"Loading local calibration dataset '{dataset_name}' (version {version})")
-    return HafniaDataset.from_name(dataset_name, version=version)
+
+    # Validate that the dataset reference includes a version
+    if ":" not in dataset_ref:
+        raise ValueError(
+            f"Dataset version must be provided in the format 'name:version' "
+            f"(e.g. 'midwest-vehicle-detection:2.0.0'), got '{dataset_ref}'"
+        )
+
+    dataset_name, dataset_version = dataset_helpers.dataset_name_and_version_from_string(dataset_ref)
+    user_logger.info(f"Loading local calibration dataset '{dataset_name}' (version {dataset_version})")
+    return HafniaDataset.from_name(dataset_name, version=dataset_version)
 
 
 def _preprocess_image(
@@ -210,11 +217,11 @@ def main(
         Optional[str],
         Parameter(
             help=(
-                "Name of the Hafnia dataset used to calibrate INT8 quantization. Accepts an optional "
-                "'name:version' suffix (e.g. 'midwest-vehicle-detection:2.0.0'); without a version "
-                f"'{_DEFAULT_CALIBRATION_DATASET_VERSION}' is used. Only used when '--quantize' is set and "
-                "running locally (on the Hafnia platform the hidden experiment dataset is used instead). "
-                f"Defaults to '{_DEFAULT_CALIBRATION_DATASET}'."
+                "Name of the Hafnia dataset used to calibrate INT8 quantization in the format "
+                "'name:version' (e.g. 'midwest-vehicle-detection:2.0.0'). The version is required. "
+                "Only used when '--quantize' is set and running locally (on the Hafnia platform the "
+                "hidden experiment dataset is used instead). Defaults to "
+                f"'{_DEFAULT_CALIBRATION_DATASET}'."
             )
         ),
     ] = None,
@@ -243,7 +250,9 @@ def main(
     using NNCF post-training quantization. Calibration images are taken from the Hafnia dataset - the
     hidden experiment dataset on the Hafnia platform, or the dataset named by ``calibration_dataset``
     (defaulting to the training dataset) when running locally - and preprocessed exactly like during
-    training. Quantization requires a static input resolution (baked-in ``resolution``).
+    training. The dataset name must be provided in the format 'name:version' (e.g.,
+    'midwest-detection-traffic:1.0.0'). Quantization requires a static input resolution (baked-in
+    ``resolution``).
     """
     logger = HafniaLogger(project_name="Export RF-DETR OpenVINO")
 
