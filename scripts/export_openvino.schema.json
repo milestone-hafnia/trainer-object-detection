@@ -2,7 +2,7 @@
     "name": "scripts/export_openvino.py",
     "cmd": "python scripts/export_openvino.py",
     "json_schema": {
-        "description": "Export an RF-DETR model archive to OpenVINO IR format.\n\nLoads the model from the compressed archive pointed to by ``model_path`` or from a user-selected\ncheckpoint when one is available.\n\nThe conversion pipeline is:\n\n    RF-DETR checkpoint/archive -> temporary ONNX -> OpenVINO IR\n\nThe temporary ONNX file is created only inside a temporary directory and is deleted after conversion.\nOnly the resulting OpenVINO IR files, ``.xml`` and ``.bin``, are stored as Hafnia artifacts.\n\nThe export options mirror the ONNX exporter where possible: ``batch_size`` bakes a static batch\ndimension into the graph, ``dynamic_batch`` enables variable batch size at runtime, ``resolution``\noverrides the square input size, and ``backbone_only`` exports just the feature extractor.\n\nWhen ``quantize`` is enabled, the converted OpenVINO IR is additionally quantized to INT8\nusing NNCF post-training quantization. Calibration images are taken from the Hafnia dataset - the\nhidden experiment dataset on the Hafnia platform, or the dataset named by ``calibration_dataset``\n(defaulting to the training dataset) when running locally - and preprocessed exactly like during\ntraining. The dataset name must be provided in the format 'name:version' (e.g.,\n'midwest-detection-traffic:1.0.0'). Quantization requires a static input resolution (baked-in\n``resolution``).",
+        "description": "Export an RF-DETR model archive to OpenVINO IR format.\n\nLoads the model from the compressed archive pointed to by ``model_path`` or from a user-selected\ncheckpoint when one is available.\n\nThe conversion pipeline is:\n\n    RF-DETR checkpoint/archive -> temporary ONNX -> OpenVINO IR\n\nThe temporary ONNX file is created only inside a temporary directory and is deleted after conversion.\nOnly the resulting OpenVINO IR files, ``.xml`` and ``.bin``, are stored as Hafnia artifacts.\n\nThe export options mirror the ONNX exporter where possible: ``batch_size`` bakes a static batch\ndimension into the graph, ``dynamic_batch`` enables variable batch size at runtime, ``resolution``\noverrides the square input size, and ``backbone_only`` exports just the feature extractor.\n\nWhen ``quantize`` is enabled, the converted OpenVINO IR is additionally quantized to INT8\nusing NNCF post-training quantization. Calibration images are taken from the Hafnia dataset - the\nhidden experiment dataset on the Hafnia platform, or the dataset named by ``calibration_dataset``\n(defaulting to the training dataset) when running locally - and preprocessed exactly like during\ntraining. The dataset name must be provided in the format 'name:version' (e.g.,\n'midwest-detection-traffic:1.0.0'). The ``calibration_split_name`` selects which split the\ncalibration images are drawn from and ``calibration_samples`` controls how many images are\nused (at least 300 is recommended for reliable accuracy). Quantization requires a static input\nresolution (baked-in ``resolution``).",
         "properties": {
             "model_path": {
                 "default": "./pretrained_models/RFDETRNano.zip",
@@ -57,6 +57,18 @@
                 "default": null,
                 "description": "Name of the Hafnia dataset used to calibrate INT8 quantization in the format 'name:version' (e.g. 'midwest-vehicle-detection:2.0.0'). The version is required. Only used when '--quantize' is set and running locally (on the Hafnia platform the hidden experiment dataset is used instead). Defaults to 'midwest-detection-traffic:1.0.0'.",
                 "title": "Calibration Dataset"
+            },
+            "calibration_split_name": {
+                "default": "validation",
+                "description": "Dataset split used to sample calibration images for INT8 quantization. Only used when '--quantize' is set.",
+                "title": "Calibration Split Name",
+                "type": "string"
+            },
+            "calibration_samples": {
+                "default": 300,
+                "description": "Number of images sampled from the dataset to calibrate INT8 quantization. Only used when '--quantize' is set. Values below 300 are allowed but not recommended, as at least 300 samples are advised for reliable accuracy.",
+                "title": "Calibration Samples",
+                "type": "integer"
             },
             "backbone_only": {
                 "default": false,

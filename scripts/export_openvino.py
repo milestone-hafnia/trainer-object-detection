@@ -47,7 +47,8 @@ _ONNX_OPSET_VERSION = 17
 _DEFAULT_CALIBRATION_DATASET = "midwest-detection-traffic:1.0.0"
 
 # Number of images sampled from the dataset to estimate activation ranges during quantization.
-_CALIBRATION_SUBSET_SIZE = 300
+# Also, the minimum recommended number of calibration samples for reliable accuracy.
+_CALIBRATION_SAMPLES = 300
 
 
 def _load_calibration_hafnia_dataset(calibration_dataset: Optional[str]) -> HafniaDataset:
@@ -162,10 +163,12 @@ def _build_calibration_dataset(
     input_width: int,
     mean: Sequence[float],
     std: Sequence[float],
+    split_name: str,
+    samples: int,
 ) -> nncf.Dataset:
     """Build an NNCF calibration dataset from Hafnia dataset images."""
-    split = hafnia_dataset.create_split_dataset(split_name=SplitName.TRAIN)
-    n_samples = min(_CALIBRATION_SUBSET_SIZE, len(split))
+    split = hafnia_dataset.create_split_dataset(split_name=split_name)
+    n_samples = min(samples, len(split))
     split = split.select_samples(n_samples=n_samples, seed=42)
     file_paths: List[str] = split.samples[SampleField.FILE_PATH].to_list()
 
@@ -225,6 +228,26 @@ def main(
             )
         ),
     ] = None,
+    calibration_split_name: Annotated[
+        str,
+        Parameter(
+            help=(
+                "Dataset split used to sample calibration images for INT8 quantization. "
+                "Only used when '--quantize' is set."
+            )
+        ),
+    ] = SplitName.VAL,
+    calibration_samples: Annotated[
+        int,
+        Parameter(
+            help=(
+                "Number of images sampled from the dataset to calibrate INT8 quantization. Only used "
+                f"when '--quantize' is set. Values below {_CALIBRATION_SAMPLES} are allowed but not "
+                f"recommended, as at least {_CALIBRATION_SAMPLES} samples are advised for reliable "
+                "accuracy."
+            )
+        ),
+    ] = _CALIBRATION_SAMPLES,
     backbone_only: Annotated[
         bool, Parameter(help="Export only the backbone (feature extractor) instead of the full detection model")
     ] = False,
@@ -251,8 +274,10 @@ def main(
     hidden experiment dataset on the Hafnia platform, or the dataset named by ``calibration_dataset``
     (defaulting to the training dataset) when running locally - and preprocessed exactly like during
     training. The dataset name must be provided in the format 'name:version' (e.g.,
-    'midwest-detection-traffic:1.0.0'). Quantization requires a static input resolution (baked-in
-    ``resolution``).
+    'midwest-detection-traffic:1.0.0'). The ``calibration_split_name`` selects which split the
+    calibration images are drawn from and ``calibration_samples`` controls how many images are
+    used (at least 300 is recommended for reliable accuracy). Quantization requires a static input
+    resolution (baked-in ``resolution``).
     """
     logger = HafniaLogger(project_name="Export RF-DETR OpenVINO")
 
@@ -284,6 +309,13 @@ def main(
             "'--calibration-dataset' is ignored because '--quantize' is not set."
         )
 
+    if quantize and calibration_samples < _CALIBRATION_SAMPLES:
+        user_logger.warning(
+            f"'--calibration-samples' is set to {calibration_samples}, which is below the "
+            f"recommended minimum of {_CALIBRATION_SAMPLES}. Quantization accuracy may not be good; "
+            f"at least {_CALIBRATION_SAMPLES} calibration samples are recommended."
+        )
+
     configuration = {
         "model_filename": Path(model_path).name,
         "output_dir": path_exported_checkpoints.as_posix(),
@@ -293,6 +325,8 @@ def main(
         "backbone_only": backbone_only,
         "quantize": quantize,
         "calibration_dataset": calibration_dataset if quantize else None,
+        "calibration_split_name": calibration_split_name if quantize else None,
+        "calibration_samples": calibration_samples if quantize else None,
     }
     logger.log_configuration(configuration)
 
@@ -331,7 +365,8 @@ def main(
                 input_height, input_width = _input_height_width(openvino_model)
                 user_logger.info(
                     f"Quantizing '{onnx_model_path.name}' to INT8 using up to "
-                    f"{_CALIBRATION_SUBSET_SIZE} calibration images at {input_width}x{input_height}"
+                    f"{calibration_samples} calibration images from the '{calibration_split_name}' "
+                    f"split at {input_width}x{input_height}"
                 )
                 nncf_calibration_dataset = _build_calibration_dataset(
                     hafnia_dataset,
@@ -339,9 +374,11 @@ def main(
                     input_width=input_width,
                     mean=wrapped_model.model.means,
                     std=wrapped_model.model.stds,
+                    split_name=calibration_split_name,
+                    samples=calibration_samples,
                 )
                 # Cap the subset size to the images actually available to avoid an NNCF warning.
-                subset_size = nncf_calibration_dataset.get_length() or _CALIBRATION_SUBSET_SIZE
+                subset_size = nncf_calibration_dataset.get_length() or calibration_samples
                 openvino_model = nncf.quantize(
                     openvino_model,
                     nncf_calibration_dataset,
