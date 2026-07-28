@@ -82,6 +82,49 @@ def test_export_onnx_script(tmp_path):
     assert len(n_checkpoint_models) > 0, "No ONNX models were exported to the checkpoints directory."
 
 
+def test_export_openvino_script(tmp_path):
+    import numpy as np
+    import openvino as ov
+
+    from scripts.export_openvino import main
+
+    logger = main()
+
+    openvino_xml_models = list(Path(logger.path_model()).glob("*.xml"))
+    assert len(openvino_xml_models) > 0, "No OpenVINO IR (.xml) models were exported."
+    openvino_bin_models = list(Path(logger.path_model()).glob("*.bin"))
+    assert len(openvino_bin_models) > 0, "No OpenVINO IR (.bin) models were exported."
+
+    n_checkpoint_xml_models = list(Path(logger.path_model_checkpoints()).glob("*.xml"))
+    assert len(n_checkpoint_xml_models) > 0, "No OpenVINO IR (.xml) models were exported to the checkpoints directory."
+    n_checkpoint_bin_models = list(Path(logger.path_model_checkpoints()).glob("*.bin"))
+    assert len(n_checkpoint_bin_models) > 0, "No OpenVINO IR (.bin) models were exported to the checkpoints directory."
+
+    # Beyond checking that files exist, verify the exported IR is actually usable: it should load,
+    # compile, and run inference on CPU, producing outputs with the expected static shapes.
+    core = ov.Core()
+    for xml_path in openvino_xml_models:
+        ov_model = core.read_model(xml_path)
+        compiled_model = core.compile_model(ov_model, "CPU")
+
+        input_shape = ov_model.inputs[0].get_partial_shape().to_shape()
+        dummy_input = np.random.rand(*input_shape).astype(np.float32)
+        outputs = compiled_model([dummy_input])
+
+        assert len(outputs) > 0, f"No outputs were produced during inference for '{xml_path.name}'."
+        for output in compiled_model.outputs:
+            output_array = outputs[output]
+            assert output_array.size > 0, f"Output '{output.get_any_name()}' is empty for '{xml_path.name}'."
+            assert np.isfinite(output_array).all(), (
+                f"Output '{output.get_any_name()}' contains non-finite values for '{xml_path.name}'."
+            )
+
+        # The pre-/post-processing recipe must be recoverable from the IR without external docs.
+        assert ov_model.has_rt_info(["preprocessing", "color_order"]), (
+            f"Expected preprocessing rt_info was not embedded in '{xml_path.name}'."
+        )
+
+
 class _StubLogger:
     """Minimal stand-in for ``HafniaLogger`` exposing only the checkpoints path."""
 
@@ -169,7 +212,7 @@ def _script_main(script_name: str):
     return module.main
 
 
-@pytest.mark.parametrize("script_name", ["train", "benchmark", "export_onnx"])
+@pytest.mark.parametrize("script_name", ["train", "benchmark", "export_onnx", "export_openvino"])
 def test_command_builder_schema(script_name: str):
     """Test that the launch schema is up-to-date for each script."""
     main = _script_main(script_name)
