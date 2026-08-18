@@ -165,7 +165,7 @@ def main(
     # Convert dataset to COCO format for training
     dataset_name = dataset_train_val.info.dataset_name
     dataset_path = Path(".data") / f"format_coco_roboflow_{dataset_name}"
-    dataset_train_val.to_coco_format(dataset_path, task_name=task_info.name)
+    dataset_train_val.to_coco_format(dataset_path, task_name=task_info.name, storage_mode="symlink")
     path_experiment = logger._local_experiment_path
     path_experiment.mkdir(parents=True, exist_ok=True)
 

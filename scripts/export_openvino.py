@@ -8,7 +8,7 @@ import nncf
 import numpy as np
 import openvino as ov
 import torch
-import torchvision.transforms.functional as F  # noqa: N812
+import torchvision.transforms.functional as F
 from cyclopts import App, Parameter
 from hafnia import utils as hafnia_utils
 from hafnia.dataset import dataset_helpers
@@ -156,7 +156,6 @@ def _set_processing_rt_info(
     ov_model.set_rt_info("sigmoid", ["postprocessing", "labels", "activation"])
 
 
-
 def _build_calibration_dataset(
     hafnia_dataset: HafniaDataset,
     input_height: int,
@@ -220,11 +219,11 @@ def main(
         Optional[str],
         Parameter(
             help=(
+                "(This is only used locally and when '--quantize' is set. When executed on the Hafnia platform, "
+                "this parameter is ignored and hidden experiment dataset is used instead.)"
                 "Name of the Hafnia dataset used to calibrate INT8 quantization in the format "
                 "'name:version' (e.g. 'midwest-vehicle-detection:2.0.0'). The version is required. "
-                "Only used when '--quantize' is set and running locally (on the Hafnia platform the "
-                "hidden experiment dataset is used instead). Defaults to "
-                f"'{_DEFAULT_CALIBRATION_DATASET}'."
+                "Only used when '--quantize' is set. Defaults to '{_DEFAULT_CALIBRATION_DATASET}'."
             )
         ),
     ] = None,
@@ -305,9 +304,7 @@ def main(
     shape = (resolution, resolution) if resolution is not None else None
 
     if calibration_dataset is not None and not quantize:
-        user_logger.warning(
-            "'--calibration-dataset' is ignored because '--quantize' is not set."
-        )
+        user_logger.warning("'--calibration-dataset' is ignored because '--quantize' is not set.")
 
     if quantize and calibration_samples < _CALIBRATION_SAMPLES:
         user_logger.warning(
