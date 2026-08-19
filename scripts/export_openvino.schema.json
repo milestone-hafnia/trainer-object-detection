@@ -55,7 +55,7 @@
                     }
                 ],
                 "default": null,
-                "description": "Name of the Hafnia dataset used to calibrate INT8 quantization in the format 'name:version' (e.g. 'midwest-vehicle-detection:2.0.0'). The version is required. Only used when '--quantize' is set and running locally (on the Hafnia platform the hidden experiment dataset is used instead). Defaults to 'midwest-detection-traffic:1.0.0'.",
+                "description": "Name of the Hafnia dataset used to calibrate INT8 quantization in the format 'name:version' (e.g. 'midwest-vehicle-detection:2.0.0'). The version is required. Only used when '--quantize' is set. Defaults to '{_DEFAULT_CALIBRATION_DATASET}'. Note: This parameter is only used locally and when '--quantize' is set. On the Hafnia platform, this parameter is ignored and the platform selected dataset/recipe is used instead.",
                 "title": "Calibration Dataset"
             },
             "calibration_split_name": {

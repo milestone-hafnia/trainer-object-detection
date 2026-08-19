@@ -219,11 +219,11 @@ def main(
         Optional[str],
         Parameter(
             help=(
-                "(This is only used locally and when '--quantize' is set. When executed on the Hafnia platform, "
-                "this parameter is ignored and hidden experiment dataset is used instead.)"
                 "Name of the Hafnia dataset used to calibrate INT8 quantization in the format "
                 "'name:version' (e.g. 'midwest-vehicle-detection:2.0.0'). The version is required. "
-                "Only used when '--quantize' is set. Defaults to '{_DEFAULT_CALIBRATION_DATASET}'."
+                "Only used when '--quantize' is set. Defaults to '{_DEFAULT_CALIBRATION_DATASET}'. "
+                "Note: This parameter is only used locally and when '--quantize' is set. On the Hafnia platform, "
+                "this parameter is ignored and the platform selected dataset/recipe is used instead."
             )
         ),
     ] = None,
