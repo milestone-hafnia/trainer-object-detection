@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "cyclopts==4.5.1",
-    "hafnia>=0.8.0",
+    "hafnia",
     "nncf>=3.2.0",
     "nvidia-ml-py>=13.595.45", # To log GPU metrics in tracker
     "openvino>=2026.2.1",
@@ -31,3 +31,6 @@ packages = ["src/trainer_object_detection", "scripts"]
 extend-include = ["*.ipynb"]
 line-length = 120                                         # This should match the 'line-length' in 'pyproject.toml'
 lint.select = ["C4", "E", "F", "B", "I", "W", "RUF", "Q"]
+
+[tool.uv.sources]
+hafnia = { git = "https://github.com/milestone-hafnia/hafnia.git", rev = "main" }

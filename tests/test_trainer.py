@@ -204,6 +204,133 @@ def test_checkpoint_is_loaded(tmp_path):
     assert Path(model_config.model_weight_path).exists()
 
 
+def test_as_rgb_tensor(tmp_path):
+    """Gray scale and RGBA images are converted to the (3, H, W) tensor expected by RF-DETR."""
+    import numpy as np
+    import torch
+    from PIL import Image
+
+    from trainer_object_detection.wrapped_model import as_rgb_tensor
+
+    gray_scale = np.arange(6 * 4, dtype=np.uint8).reshape(6, 4)
+    gray_scale_normalized = torch.from_numpy(gray_scale).float() / 255.0
+
+    # Gray scale stored as (H, W) and as (H, W, 1) is replicated across the three channels
+    for image in [gray_scale, gray_scale[:, :, None]]:
+        image_tensor = as_rgb_tensor(image)
+        assert image_tensor.shape == (3, 6, 4)
+        assert image_tensor.dtype == torch.float32
+        for i_channel in range(3):
+            torch.testing.assert_close(image_tensor[i_channel], gray_scale_normalized)
+
+    # RGB channels are kept as-is and the alpha channel of RGBA images is dropped
+    rgb = np.random.randint(0, 256, size=(6, 4, 3), dtype=np.uint8)
+    rgb_tensor = as_rgb_tensor(rgb)
+    torch.testing.assert_close(rgb_tensor, torch.from_numpy(rgb).permute(2, 0, 1).float() / 255.0)
+    rgba = np.concatenate([rgb, np.full((6, 4, 1), 255, dtype=np.uint8)], axis=2)
+    torch.testing.assert_close(as_rgb_tensor(rgba), rgb_tensor)
+
+    # PIL images and image paths are handled as well - here for a gray scale ("L" mode) image
+    image_pil = Image.fromarray(gray_scale)
+    torch.testing.assert_close(as_rgb_tensor(image_pil), as_rgb_tensor(gray_scale))
+    path_image = tmp_path / "gray_scale.png"
+    image_pil.save(path_image)
+    torch.testing.assert_close(as_rgb_tensor(path_image), as_rgb_tensor(gray_scale))
+
+    # Values stay in the [0, 1] range required by RF-DETR
+    assert 0.0 <= float(rgb_tensor.min()) and float(rgb_tensor.max()) <= 1.0
+
+    with pytest.raises(ValueError):
+        as_rgb_tensor(np.zeros((6, 4, 2), dtype=np.uint8))
+
+
+class _StubDetections:
+    """Minimal stand-in for a supervision ``Detections`` object holding a single full-image box."""
+
+    def __init__(self, height: int, width: int):
+        import numpy as np
+
+        self.xyxy = np.array([[0, 0, width, height]], dtype=np.float32)
+        self.class_id = np.array([0])
+        self.confidence = np.array([0.9], dtype=np.float32)
+
+
+class _StubRFDETR:
+    """Stand-in for ``RFDETR`` that records the images it is given and mimics its return type."""
+
+    def __init__(self):
+        # Shapes are accumulated across calls, as 'predict_batch' predicts one image at a time.
+        self.image_shapes = []
+
+    def predict(self, images, threshold, include_source_image=True):
+        import torch
+
+        assert isinstance(images, list), "WrappedModel is expected to always predict on a list of images."
+        assert all(isinstance(image, torch.Tensor) for image in images), (
+            "Images should reach RF-DETR as tensors, so that no further conversion is needed."
+        )
+        self.image_shapes.extend(tuple(image.shape) for image in images)
+        detections = [_StubDetections(height=image.shape[1], width=image.shape[2]) for image in images]
+        # RF-DETR returns a bare 'Detections' object - not a list - when predicting on a single image.
+        return detections if len(detections) > 1 else detections[0]
+
+
+def _stub_wrapped_model():
+    from hafnia.dataset.hafnia_dataset_types import TaskInfo
+    from hafnia.dataset.primitives import Bbox
+
+    from trainer_object_detection.wrapped_model import InferenceConfig, WrappedModel
+
+    task = TaskInfo.from_class_names(primitive=Bbox, class_names=["car"])
+    return WrappedModel(model=_StubRFDETR(), task=task, inference_config=InferenceConfig())
+
+
+def test_predict_single_gray_scale_image():
+    """``predict`` takes a single image - gray scale included - and returns a flat prediction list."""
+    import numpy as np
+
+    gray_scale = np.zeros((8, 6), dtype=np.uint8)
+
+    model = _stub_wrapped_model()
+    predictions = model.predict(gray_scale)
+
+    assert [p.class_name for p in predictions] == ["car"]
+    assert model.model.image_shapes == [(3, 8, 6)]
+
+
+def test_predict_batch_of_mixed_image_types(tmp_path):
+    """``predict_batch`` takes a list of mixed image types and returns predictions per image.
+
+    ``predict_batch`` is inherited from ``InferenceModel`` and calls ``predict`` once per image.
+    """
+    import numpy as np
+    from PIL import Image
+
+    gray_scale = np.zeros((8, 6), dtype=np.uint8)
+    path_image = tmp_path / "gray_scale.png"
+    Image.fromarray(gray_scale).save(path_image)
+    images = [
+        gray_scale,  # (H, W) gray scale array
+        Image.fromarray(np.zeros((10, 10, 3), dtype=np.uint8)),  # PIL RGB image
+        path_image,  # path to a gray scale image
+        np.zeros((4, 12, 4), dtype=np.uint8),  # RGBA array
+    ]
+
+    model = _stub_wrapped_model()
+    predictions_per_image = model.predict_batch(images)
+
+    assert len(predictions_per_image) == len(images)
+    assert all(len(p) == 1 for p in predictions_per_image)
+
+    # Every image reaches the model as a 3-channel tensor, in the original order
+    assert model.model.image_shapes == [(3, 8, 6), (3, 10, 10), (3, 8, 6), (3, 4, 12)]
+
+    # Each box is normalized by its own image shape, so the full-image stub box covers the whole image
+    for image_predictions in predictions_per_image:
+        assert image_predictions[0].width == pytest.approx(1.0)
+        assert image_predictions[0].height == pytest.approx(1.0)
+
+
 def _script_main(script_name: str):
     """Import the ``main`` function from a script module by name."""
     import importlib

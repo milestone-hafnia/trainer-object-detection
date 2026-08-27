@@ -21,9 +21,11 @@
   },
   "json.format.keepLines": true,
   "autoDocstring.docstringFormat": "google-notypes",
+  "python.languageServer": "Pylance",
   "python.testing.pytestArgs": [
     "tests",
-    "-vv"
+    "-vv",
+    "--durations=20"
   ],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
