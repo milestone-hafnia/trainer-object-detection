@@ -1487,8 +1487,8 @@ wheels = [
 
 [[package]]
 name = "hafnia"
-version = "0.8.1"
-source = { git = "https://github.com/milestone-hafnia/hafnia.git?rev=main#3e5c1886f2a87d6a0868208d55639b0d58b124a1" }
+version = "0.8.2"
+source = { git = "https://github.com/milestone-hafnia/hafnia.git?rev=fix-inference-model#346628c49ae0c7cafdc5ec2de40dce8b520a35b9" }
 dependencies = [
     { name = "boto3" },
     { name = "click" },
@@ -5448,7 +5448,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "cyclopts", specifier = "==4.5.1" },
-    { name = "hafnia", git = "https://github.com/milestone-hafnia/hafnia.git?rev=main" },
+    { name = "hafnia", git = "https://github.com/milestone-hafnia/hafnia.git?rev=fix-inference-model" },
     { name = "nncf", specifier = ">=3.2.0" },
     { name = "nvidia-ml-py", specifier = ">=13.595.45" },
     { name = "openvino", specifier = ">=2026.2.1" },

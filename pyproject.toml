@@ -8,7 +8,7 @@ dependencies = [
     "cyclopts==4.5.1",
     "hafnia",
     "nncf>=3.2.0",
-    "nvidia-ml-py>=13.595.45", # To log GPU metrics in tracker
+    "nvidia-ml-py>=13.595.45",           # To log GPU metrics in tracker
     "openvino>=2026.2.1",
     "pytest>=9.0.1",
     "rfdetr[train,loggers,onnx]==1.8.1",
@@ -33,4 +33,4 @@ line-length = 120                                         # This should match th
 lint.select = ["C4", "E", "F", "B", "I", "W", "RUF", "Q"]
 
 [tool.uv.sources]
-hafnia = { git = "https://github.com/milestone-hafnia/hafnia.git", rev = "main" }
+hafnia = { git = "https://github.com/milestone-hafnia/hafnia.git", rev = "fix-inference-model" }
