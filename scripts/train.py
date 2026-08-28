@@ -7,7 +7,6 @@ from cyclopts import App, Parameter
 from hafnia import utils as hafnia_utils
 from hafnia.dataset.benchmark.benchmark import metric_calculations, run_inference_on_dataset
 from hafnia.dataset.dataset_names import SampleField, SplitName
-from hafnia.dataset.dataset_recipe.dataset_recipe import DatasetRecipe
 from hafnia.dataset.hafnia_dataset import HafniaDataset
 from hafnia.dataset.hafnia_dataset_types import TaskInfo
 from hafnia.dataset.primitives import Primitive
@@ -122,8 +121,7 @@ def main(
         path_dataset = hafnia_utils.get_dataset_path_in_hafnia_cloud()  # The path to hidden dataset
         dataset = HafniaDataset.from_path(path_dataset)
     else:
-        # dataset = HafniaDataset.from_name("eccv-cross-city", version="1.0.0")
-        dataset = DatasetRecipe.from_recipe_name("person-vehicle-all").build()
+        dataset = HafniaDataset.from_name("midwest-traffic-detection", version="1.0.0")
 
     if samples is not None:
         dataset = dataset.select_samples(n_samples=samples)

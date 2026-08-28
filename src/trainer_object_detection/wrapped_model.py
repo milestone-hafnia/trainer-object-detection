@@ -14,6 +14,7 @@ from PIL import Image
 from pydantic import BaseModel
 from rfdetr import config, detr
 from rfdetr.assets.model_weights import download_pretrain_weights
+from rfdetr.detr import RFDETR
 
 MODEL_CONFIG_NAME = "model_config.json"
 
@@ -40,7 +41,7 @@ class InitModelConfig(BaseModel):
     task: TaskInfo
     model_weight_path: Optional[str]
 
-    def get_trainer(self):
+    def get_trainer(self) -> RFDETR:
         _, model_trainer = primitive_and_model_from_name(self.name, model_weights=self.model_weight_path)
         return model_trainer
 
@@ -137,7 +138,8 @@ class WrappedModel(InferenceModel):
         with tempfile.TemporaryDirectory(prefix="trainer_model_") as extract_dir:
             model_config = _load_config_and_weights(path_archive, Path(extract_dir))
             primitive, model = primitive_and_model_from_name(
-                model_config.name, model_weights=str(model_config.model_weight_path)
+                model_name=model_config.name,
+                model_weights=str(model_config.model_weight_path),
             )
 
         if primitive != model_config.task.primitive:
