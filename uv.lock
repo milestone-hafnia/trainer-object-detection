@@ -5452,7 +5452,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "cyclopts", specifier = "==4.5.1" },
-    { name = "hafnia", specifier = ">=0.8.2" },
+    { name = "hafnia", specifier = "==0.8.2" },
     { name = "nncf", specifier = ">=3.2.0" },
     { name = "nvidia-ml-py", specifier = ">=13.595.45" },
     { name = "openvino", specifier = ">=2026.2.1" },
