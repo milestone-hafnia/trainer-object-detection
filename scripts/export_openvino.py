@@ -196,7 +196,7 @@ def main(
     dynamic_batch: Annotated[
         bool,
         Parameter(help="Export with a dynamic batch dimension so the model accepts variable batch sizes at runtime"),
-    ] = False,
+    ] = True,
     resolution: Annotated[
         Optional[int],
         Parameter(
