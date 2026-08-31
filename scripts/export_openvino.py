@@ -112,6 +112,7 @@ def _set_processing_rt_info(
     ov_model: ov.Model,
     mean: Sequence[float],
     std: Sequence[float],
+    labels: Sequence[str],
     backbone_only: bool,
 ) -> None:
     """Embed the pre-/post-processing recipe into the model's ``rt_info``.
@@ -119,41 +120,35 @@ def _set_processing_rt_info(
     Stores everything a consumer needs to reproduce RF-DETR preprocessing (channel order, resize,
     scaling, normalization) and to interpret the raw detection outputs, so the correct handling can
     be recovered later directly from the OpenVINO IR without external documentation.
+
+    Values follow the OpenVINO Model API ``model_info`` convention, which reconstructs an input as
+    ``(pixel - mean_values) / scale_values`` from raw ``[0, 255]`` pixels. RF-DETR preprocessing
+    instead rescales to ``[0, 1]`` and then normalizes with ``mean``/``std`` (both expressed in the
+    ``[0, 1]`` range), i.e. ``((pixel / 255) - mean) / std``. The two are made equivalent by folding
+    the ``/255`` rescale into the normalization statistics::
+
+        mean_values  = mean * 255
+        scale_values = std * 255
+
+    RF-DETR resizes to a fixed square without preserving the aspect ratio and does not pad, so the
+    ``resize_type`` is ``standard`` (no letterbox / ``pad_value``). Inference receives BGR images
+    (e.g. from ``cv2.imread``) that are converted to RGB, so ``reverse_input_channels`` is ``True``.
     """
-    # Preprocessing: BGR->RGB, resize to the model input, scale to [0, 1] (divide by 255),
-    # then normalize with (x - mean) / std where mean/std are in the [0, 1] range.
-    ov_model.set_rt_info(
-        "RF-DETR preprocessing: convert BGR->RGB, resize to 'resize_hw', divide pixels by "
-        "'scale_divisor' to get [0, 1], then normalize with (x - normalize_mean) / normalize_std.",
-        ["preprocessing", "description"],
-    )
-    ov_model.set_rt_info("RGB", ["preprocessing", "color_order"])
-    ov_model.set_rt_info(True, ["preprocessing", "reverse_input_channels"])
-    ov_model.set_rt_info("NCHW", ["preprocessing", "layout"])
-    ov_model.set_rt_info("bilinear", ["preprocessing", "resize_interpolation"])
-    ov_model.set_rt_info(255.0, ["preprocessing", "scale_divisor"])
-    ov_model.set_rt_info([float(v) for v in mean], ["preprocessing", "normalize_mean"])
-    ov_model.set_rt_info([float(v) for v in std], ["preprocessing", "normalize_std"])
+    # Fold the RF-DETR ``/255`` rescale into the normalization statistics so a consumer can apply a
+    # single ``(pixel - mean_values) / scale_values`` step directly on raw [0, 255] pixels.
+    mean_values = [round(float(m) * 255.0, 6) for m in mean]
+    scale_values = [round(float(s) * 255.0, 6) for s in std]
 
-    partial_shape = ov_model.inputs[0].get_partial_shape()
-    if len(partial_shape) == 4 and partial_shape[2].is_static and partial_shape[3].is_static:
-        ov_model.set_rt_info(
-            [partial_shape[2].get_length(), partial_shape[3].get_length()],
-            ["preprocessing", "resize_hw"],
-        )
+    ov_model.set_rt_info("rfdetr", ["model_info", "model_type"])
+    ov_model.set_rt_info(True, ["model_info", "reverse_input_channels"])
+    ov_model.set_rt_info("standard", ["model_info", "resize_type"])
+    ov_model.set_rt_info("LINEAR", ["model_info", "interpolation_mode"])
+    ov_model.set_rt_info(mean_values, ["model_info", "mean_values"])
+    ov_model.set_rt_info(scale_values, ["model_info", "scale_values"])
 
-    # Postprocessing only applies to the full detection model (the backbone emits raw features).
-    if backbone_only:
-        return
-
-    ov_model.set_rt_info(
-        "RF-DETR detection outputs: 'dets' = boxes as (cx, cy, w, h) normalized to [0, 1]; "
-        "'labels' = per-class logits, apply sigmoid to obtain confidences.",
-        ["postprocessing", "description"],
-    )
-    ov_model.set_rt_info("cxcywh_normalized", ["postprocessing", "dets", "box_format"])
-    ov_model.set_rt_info("class_logits", ["postprocessing", "labels", "type"])
-    ov_model.set_rt_info("sigmoid", ["postprocessing", "labels", "activation"])
+    # A backbone-only export has no detection head, so class labels do not apply.
+    if not backbone_only:
+        ov_model.set_rt_info(list(labels), ["model_info", "labels"])
 
 
 def _build_calibration_dataset(
@@ -387,6 +382,7 @@ def main(
                 openvino_model,
                 mean=wrapped_model.model.means,
                 std=wrapped_model.model.stds,
+                labels=wrapped_model.task.get_class_names() or [],
                 backbone_only=backbone_only,
             )
 
