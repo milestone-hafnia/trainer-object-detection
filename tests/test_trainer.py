@@ -123,8 +123,23 @@ def test_export_openvino_script(tmp_path):
             )
 
         # The pre-/post-processing recipe must be recoverable from the IR without external docs.
-        assert ov_model.has_rt_info(["preprocessing", "color_order"]), (
-            f"Expected preprocessing rt_info was not embedded in '{xml_path.name}'."
+        assert ov_model.has_rt_info(["model_info"]), (
+            f"Expected 'model_info' rt_info was not embedded in '{xml_path.name}'."
+        )
+
+        assert ov_model.has_rt_info(["model_info", "model_type"]), (
+            f"Expected 'model_info/model_type' rt_info was not embedded in '{xml_path.name}'."
+        )
+        model_type = ov_model.get_rt_info(["model_info", "model_type"]).astype(str)
+        assert model_type == "rfdetr", f"Unexpected model_type '{model_type}' in '{xml_path.name}'."
+
+        assert ov_model.has_rt_info(["model_info", "labels"]), (
+            f"Expected 'model_info/labels' rt_info was not embedded in '{xml_path.name}'."
+        )
+        labels = ov_model.get_rt_info(["model_info", "labels"]).astype(str).split(" ")
+        assert len(labels) > 0, f"No class labels were embedded in '{xml_path.name}'."
+        assert all(isinstance(label, str) and label for label in labels), (
+            f"Class labels embedded in '{xml_path.name}' must be non-empty strings, got {labels}."
         )
 
 
