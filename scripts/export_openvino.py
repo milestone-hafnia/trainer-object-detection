@@ -383,7 +383,7 @@ def main(
                 openvino_model,
                 mean=wrapped_model.model.means,
                 std=wrapped_model.model.stds,
-                labels=[class_name.name for class_name in bbox_task.classes],
+                labels=[class_name.name.replace(" ", "_") for class_name in bbox_task.classes],
                 backbone_only=backbone_only,
             )
 
