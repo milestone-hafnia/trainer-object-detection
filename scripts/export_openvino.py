@@ -377,12 +377,13 @@ def main(
                     subset_size=subset_size,
                 )
 
-            # Record the pre-/post-processing recipe in the IR so it can be recovered later.
+            # Record the pre-processing recipe and labels in the IR so it can be recovered later.
+            bbox_task = wrapped_model.get_model_info().get_task_by_primitive("Bbox")
             _set_processing_rt_info(
                 openvino_model,
                 mean=wrapped_model.model.means,
                 std=wrapped_model.model.stds,
-                labels=wrapped_model.task.get_class_names() or [],
+                labels=[class_name.name for class_name in bbox_task.classes],
                 backbone_only=backbone_only,
             )
 
