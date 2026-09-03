@@ -101,13 +101,16 @@ def test_export_openvino_script(tmp_path):
     assert len(n_checkpoint_bin_models) > 0, "No OpenVINO IR (.bin) models were exported to the checkpoints directory."
 
     # Beyond checking that files exist, verify the exported IR is actually usable: it should load,
-    # compile, and run inference on CPU, producing outputs with the expected static shapes.
+    # compile, and run inference on CPU, producing outputs with valid shapes.
     core = ov.Core()
     for xml_path in openvino_xml_models:
         ov_model = core.read_model(xml_path)
         compiled_model = core.compile_model(ov_model, "CPU")
 
-        input_shape = ov_model.inputs[0].get_partial_shape().to_shape()
+        # The model is exported with a dynamic batch dimension by default, so resolve any dynamic
+        # dimensions (e.g. the batch size) to a concrete size of 1 to build a valid dummy input.
+        partial_shape = ov_model.inputs[0].get_partial_shape()
+        input_shape = [dim.get_length() if dim.is_static else 1 for dim in partial_shape]
         dummy_input = np.random.rand(*input_shape).astype(np.float32)
         outputs = compiled_model([dummy_input])
 
@@ -120,8 +123,23 @@ def test_export_openvino_script(tmp_path):
             )
 
         # The pre-/post-processing recipe must be recoverable from the IR without external docs.
-        assert ov_model.has_rt_info(["preprocessing", "color_order"]), (
-            f"Expected preprocessing rt_info was not embedded in '{xml_path.name}'."
+        assert ov_model.has_rt_info(["model_info"]), (
+            f"Expected 'model_info' rt_info was not embedded in '{xml_path.name}'."
+        )
+
+        assert ov_model.has_rt_info(["model_info", "model_type"]), (
+            f"Expected 'model_info/model_type' rt_info was not embedded in '{xml_path.name}'."
+        )
+        model_type = ov_model.get_rt_info(["model_info", "model_type"]).astype(str)
+        assert model_type == "rfdetr", f"Unexpected model_type '{model_type}' in '{xml_path.name}'."
+
+        assert ov_model.has_rt_info(["model_info", "labels"]), (
+            f"Expected 'model_info/labels' rt_info was not embedded in '{xml_path.name}'."
+        )
+        labels = ov_model.get_rt_info(["model_info", "labels"]).astype(str).split(" ")
+        assert len(labels) > 0, f"No class labels were embedded in '{xml_path.name}'."
+        assert all(isinstance(label, str) and label for label in labels), (
+            f"Class labels embedded in '{xml_path.name}' must be non-empty strings, got {labels}."
         )
 
 
