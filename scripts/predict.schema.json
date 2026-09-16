@@ -1,0 +1,41 @@
+{
+    "name": "scripts/predict.py",
+    "cmd": "python scripts/predict.py",
+    "json_schema": {
+        "description": "Run inference and emit predictions as a HafniaDataset directory.",
+        "properties": {
+            "model_dir": {
+                "description": "Directory containing exactly one ``*.zip`` pretrained model archive.",
+                "format": "path",
+                "title": "Model Dir",
+                "type": "string"
+            },
+            "dataset_dir": {
+                "description": "Directory containing a HafniaDataset (as produced by ``write_annotations``).",
+                "format": "path",
+                "title": "Dataset Dir",
+                "type": "string"
+            },
+            "output_dir": {
+                "description": "Directory to write the predictions-augmented HafniaDataset into.",
+                "format": "path",
+                "title": "Output Dir",
+                "type": "string"
+            }
+        },
+        "required": [
+            "model_dir",
+            "dataset_dir",
+            "output_dir"
+        ],
+        "title": "mainArgs",
+        "type": "object",
+        "positional_args": []
+    },
+    "case_conversion": "kebab",
+    "parameter_prefix": "--",
+    "nested_parameter_handling": "dot",
+    "assignment_separator": "space",
+    "bool_handling": "flag-negation",
+    "order": 100
+}

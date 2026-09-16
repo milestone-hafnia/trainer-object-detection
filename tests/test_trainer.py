@@ -349,6 +349,62 @@ def test_predict_batch_of_mixed_image_types(tmp_path):
         assert image_predictions[0].height == pytest.approx(1.0)
 
 
+def test_COCO2FourClass_mapping_projects_predictions_to_four_class_ontology():
+    """The COCO2FourClass mapping remaps in-scope COCO classes and drops out-of-scope ones.
+
+    Uses a synthetic predictions-augmented dataset with a Bbox task in COCO-91 class order (the
+    layout ``RFDETRNano`` outputs, with ``NotDefined_XXX`` placeholders at the N/A gaps), and
+    asserts the ``remove_undefined`` mapping yields exactly the shared 4-class ontology
+    ``{0: vehicle, 1: person, 2: motorbike, 3: bicycle}``.
+    """
+    from hafnia.dataset.hafnia_dataset import HafniaDataset
+    from hafnia.dataset.hafnia_dataset_types import DatasetInfo, Sample, TaskInfo
+    from hafnia.dataset.primitives import Bbox
+
+    from trainer_object_detection.utils import CLASS_MAPPINGS
+
+    task_name = "objects/predictions"
+    # Subset of COCO-91 sufficient to exercise both remap paths and out-of-scope drops.
+    coco_names = [
+        "NotDefined_000", "person", "bicycle", "car", "motorcycle", "airplane",
+        "bus", "train", "truck", "boat", "traffic light", "fire hydrant",
+    ]
+    task = TaskInfo.from_class_names(primitive=Bbox, class_names=coco_names, name=task_name)
+    info = DatasetInfo(dataset_name="COCO2FourClass_test", version="0.0.0", tasks=[task])
+
+    def _bbox(class_name: str) -> Bbox:
+        return Bbox(
+            height=0.1, width=0.1, top_left_x=0.1, top_left_y=0.1,
+            class_name=class_name, class_idx=coco_names.index(class_name),
+            confidence=0.9, ground_truth=False, task_name=task_name,
+        )
+
+    in_scope = ["car", "truck", "bus", "person", "motorcycle", "bicycle"]
+    out_of_scope = ["airplane", "train", "boat", "traffic light", "fire hydrant"]
+    sample = Sample(
+        file_path=None, height=100, width=100, split="test", storage_format="image",
+        bboxes=[_bbox(name) for name in in_scope + out_of_scope],
+    )
+    dataset = HafniaDataset.from_samples_list([sample], info=info)
+
+    mapped = dataset.class_mapper(
+        class_mapping=CLASS_MAPPINGS["COCO2FourClass"],
+        method="remove_undefined",
+        task_name=task_name,
+    )
+
+    # Target ontology is exactly the 4-class shared space, in the fixed order.
+    mapped_task = mapped.info.get_task_by_name(task_name)
+    assert [c.name for c in mapped_task.classes] == ["vehicle", "person", "motorbike", "bicycle"]
+
+    # In-scope classes remap; out-of-scope classes are dropped.
+    predicted = mapped.samples.select("bboxes").row(0)[0]
+    assert [b["class_name"] for b in predicted] == [
+        "vehicle", "vehicle", "vehicle", "person", "motorbike", "bicycle",
+    ]
+    assert {b["class_idx"] for b in predicted} <= {0, 1, 2, 3}
+
+
 def _script_main(script_name: str):
     """Import the ``main`` function from a script module by name."""
     import importlib
