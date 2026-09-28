@@ -21,6 +21,18 @@ CLASS_MAPPINGS = {
         "Vehicle*": "Vehicle",
         # Ignore the remaining classes
     },
+    # RFDETRNano is pretrained on COCO-91 (native class names at indices 1=person, 2=bicycle,
+    # 3=car, 4=motorcycle, 6=bus, 8=truck; N/A gaps are placeholder classes "NotDefined_XXX").
+    # We key by class name so the mapping is robust to the 80- vs 91-index difference. 
+    "COCO2FourClass": {
+        "car": "Vehicle",
+        "truck": "Vehicle",
+        "bus": "Vehicle",
+        "person": "Person",
+        "motorcycle": "Motorcycle",
+        "bicycle": "Bicycle",
+        # Ignore the remaining classes (dropped via method="remove_undefined").
+    },
 }
 
 _METRIC_KEY_MAP = {
