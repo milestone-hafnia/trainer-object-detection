@@ -29,7 +29,7 @@ CLASS_MAPPINGS = {
         "truck": "vehicle",
         "bus": "vehicle",
         "person": "person",
-        "motorcycle": "motorbike",
+        "motorcycle": "motorcycle",
         "bicycle": "bicycle",
         # Ignore the remaining classes (dropped via method="remove_undefined").
     },
