@@ -355,7 +355,7 @@ def test_COCO2FourClass_mapping_projects_predictions_to_four_class_ontology():
     Uses a synthetic predictions-augmented dataset with a Bbox task in COCO-91 class order (the
     layout ``RFDETRNano`` outputs, with ``NotDefined_XXX`` placeholders at the N/A gaps), and
     asserts the ``remove_undefined`` mapping yields exactly the shared 4-class ontology
-    ``{0: vehicle, 1: person, 2: motorbike, 3: bicycle}``.
+    ``{0: vehicle, 1: person, 2: motorcycle, 3: bicycle}``.
     """
     from hafnia.dataset.hafnia_dataset import HafniaDataset
     from hafnia.dataset.hafnia_dataset_types import DatasetInfo, Sample, TaskInfo
@@ -395,12 +395,12 @@ def test_COCO2FourClass_mapping_projects_predictions_to_four_class_ontology():
 
     # Target ontology is exactly the 4-class shared space, in the fixed order.
     mapped_task = mapped.info.get_task_by_name(task_name)
-    assert [c.name for c in mapped_task.classes] == ["vehicle", "person", "motorbike", "bicycle"]
+    assert [c.name for c in mapped_task.classes] == ["vehicle", "person", "motorcycle", "bicycle"]
 
     # In-scope classes remap; out-of-scope classes are dropped.
     predicted = mapped.samples.select("bboxes").row(0)[0]
     assert [b["class_name"] for b in predicted] == [
-        "vehicle", "vehicle", "vehicle", "person", "motorbike", "bicycle",
+        "vehicle", "vehicle", "vehicle", "person", "motorcycle", "bicycle",
     ]
     assert {b["class_idx"] for b in predicted} <= {0, 1, 2, 3}
 
