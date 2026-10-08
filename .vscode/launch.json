@@ -55,7 +55,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/scripts/benchmark.py",
             "args": [
-                "--model-path", "./local_stuff/checkpoint_best_ema.zip",
+                "--model-path", "./pretrained_models/RFDETRNano.zip",
                 "--samples", "10"
             ],
         },
@@ -65,7 +65,17 @@
             "request": "launch",
             "program": "${workspaceFolder}/scripts/export_onnx.py",
             "args": [
-                "--model-path", "./local_stuff/checkpoint_best_ema.zip",
+                "--model-path", "./pretrained_models/RFDETRNano.zip",
+            ],
+        },
+        {
+            "name": "Model Export to OpenVINO",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/export_openvino.py",
+            "args": [
+                "--model-path", "./pretrained_models/RFDETRNano.zip",
+                "--quantize",
             ],
         }
     ]

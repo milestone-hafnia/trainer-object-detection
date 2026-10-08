@@ -57,6 +57,12 @@
                 "title": "Batch Size",
                 "type": "integer"
             },
+            "num_workers": {
+                "default": 2,
+                "description": "Number of dataloader worker processes used during training (0 loads data in the main process)",
+                "title": "Num Workers",
+                "type": "integer"
+            },
             "grad_accumulation_steps": {
                 "default": 1,
                 "description": "Number of gradient accumulation steps (effective batch size = batch_size * grad_accumulation_steps)",

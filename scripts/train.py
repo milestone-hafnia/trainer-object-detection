@@ -6,7 +6,7 @@ import torch
 from cyclopts import App, Parameter
 from hafnia import utils as hafnia_utils
 from hafnia.dataset.benchmark.benchmark import metric_calculations, run_inference_on_dataset
-from hafnia.dataset.dataset_names import SampleField, SplitName
+from hafnia.dataset.dataset_names import SplitName
 from hafnia.dataset.hafnia_dataset import HafniaDataset
 from hafnia.dataset.hafnia_dataset_types import TaskInfo
 from hafnia.dataset.primitives import Primitive
@@ -46,6 +46,10 @@ def main(
     pretrained: Annotated[bool, Parameter(help="Initialize the model from pretrained weights")] = True,
     epochs: Annotated[int, Parameter(help="Number of epochs to train")] = 10,
     batch_size: Annotated[int, Parameter(help="Batch size for training")] = 8,
+    num_workers: Annotated[
+        int,
+        Parameter(help="Number of dataloader worker processes used during training (0 loads data in the main process)"),
+    ] = 2,
     grad_accumulation_steps: Annotated[
         int,
         Parameter(
@@ -121,7 +125,7 @@ def main(
         path_dataset = hafnia_utils.get_dataset_path_in_hafnia_cloud()  # The path to hidden dataset
         dataset = HafniaDataset.from_path(path_dataset)
     else:
-        dataset = HafniaDataset.from_name("midwest-traffic-detection", version="1.0.0")
+        dataset = HafniaDataset.from_name("midwest-vehicle-detection", version="1.0.0")
 
     if samples is not None:
         dataset = dataset.select_samples(n_samples=samples)
@@ -142,6 +146,7 @@ def main(
         "pretrained": pretrained,
         "epochs": epochs,
         "batch_size": batch_size,
+        "num_workers": num_workers,
         "grad_accumulation_steps": grad_accumulation_steps,
         "learning_rate": learning_rate,
         "resolution": resolution,
@@ -177,6 +182,7 @@ def main(
         dataset_dir=dataset_path.as_posix(),
         epochs=epochs,
         batch_size=batch_size,
+        num_workers=num_workers,
         lr=learning_rate,
         grad_accum_steps=grad_accumulation_steps,
         output_dir=path_experiment.as_posix(),
@@ -206,13 +212,6 @@ def main(
     inference_model.optimize_for_inference()
 
     dataset_with_predictions = run_inference_on_dataset(dataset=dataset_test, model=inference_model)
-
-    # Experiment output folder
-    path_experiment_output_folder = logger._path_artifacts()
-    # Save predictions to experiment output folder (drops unneeded columns)
-    drop_columns = [SampleField.FILE_PATH, SampleField.VIDEO_INFO, SampleField.CAMERA_INFO, SampleField.META]
-    dataset_with_predictions.samples = dataset_with_predictions.samples.drop(drop_columns, strict=False)
-    dataset_with_predictions.write_annotations(path_experiment_output_folder)
 
     no_gt_data = dataset_test.samples.select(pl.col(task_info.primitive.column_name()).list.len()).sum().item() == 0
     if no_gt_data:  # Skip metric calculation for test sets without ground-truth annotations
