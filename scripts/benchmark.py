@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import Annotated
 
@@ -74,6 +75,12 @@ def main(
         Optional[int],
         Parameter(help="Limit the number of samples to run on. Useful for faster testing."),
     ] = None,
+    publish_pretrained: Annotated[
+        bool,
+        Parameter(
+            help="Save the loaded pretrained model as a checkpoint on the platform. Ignored locally."
+        ),
+    ] = False,
 ):
     """Run a model on a Hafnia dataset split and compute detection metrics when ground truth is available.
 
@@ -107,6 +114,14 @@ def main(
 
     model = WrappedModel.load_model(model_path, inference_config=inference)
     model.optimize_for_inference()
+
+    if publish_pretrained:
+        if is_hafnia_cloud_job():
+            pretrained_zip = Path(model_path)
+            shutil.copy(pretrained_zip, logger.path_model() / pretrained_zip.name)
+            user_logger.info(f"Published pretrained archive '{pretrained_zip.name}' to experiment path_model().")
+        else:
+            user_logger.warning("--publish-pretrained ignored: not running in a Hafnia cloud experiment.")
 
     dataset_split = dataset.create_split_dataset(split_name=split_name)
     dataset_task_info = dataset.info.get_task_by_primitive(model.task.primitive)
